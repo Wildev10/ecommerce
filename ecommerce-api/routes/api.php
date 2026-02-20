@@ -53,16 +53,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
 
-    // Routes Payments (authentifié)
-Route::middleware('auth:sanctum')->group(function () {
+    // Routes Payments (utilisateur)
     Route::post('/orders/{orderId}/pay', [PaymentController::class, 'pay']);
     Route::get('/my-payments', [PaymentController::class, 'myPayments']);
     Route::get('/payments/{id}', [PaymentController::class, 'show']);
-});
 
-// Admin : tous les paiements
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-    Route::get('/payments', [PaymentController::class, 'index']);
-});
-
+    // Admin : tous les paiements
+    Route::middleware('admin')->group(function () {
+        Route::get('/payments', [PaymentController::class, 'index']);
+    });
 });

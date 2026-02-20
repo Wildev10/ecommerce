@@ -30,14 +30,15 @@ class CategoryController extends Controller
     }
 
     // POST /api/categories (Admin only)
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|string',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255|unique:categories,name',
+        'description' => 'nullable|string',
+        'image' => 'nullable|string',
+    ]);
 
+    try {
         $category = Category::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
@@ -46,7 +47,13 @@ class CategoryController extends Controller
         ]);
 
         return response()->json($category, 201);
+    } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+        return response()->json([
+            'message' => 'Cette catégorie existe déjà.'
+        ], 422);
     }
+}
+
 
     // PUT /api/categories/{id}
     public function update(Request $request, $id)
