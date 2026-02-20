@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\CouponController;
 
 // Auth publiques
 Route::post('/register', [AuthController::class, 'register']);
@@ -61,5 +62,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin : tous les paiements
     Route::middleware('admin')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index']);
+    });
+
+        // Routes admin (protégées)
+    Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
+        Route::apiResource('coupons', CouponController::class);
+    });
+
+    // Route client : vérifier un coupon
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/coupons/verify', [CouponController::class, 'verify']);
     });
 });
