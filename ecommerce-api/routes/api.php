@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\AddressController;
+
 
 // Auth publiques
 Route::post('/register', [AuthController::class, 'register']);
@@ -73,4 +75,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/coupons/verify', [CouponController::class, 'verify']);
     });
+
+
+    // Adresses de livraison
+    Route::apiResource('addresses', AddressController::class);
+    Route::patch('addresses/{address}/default', [AddressController::class, 'setDefault']);
+
 });
