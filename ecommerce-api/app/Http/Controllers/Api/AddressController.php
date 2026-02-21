@@ -95,6 +95,13 @@ class AddressController extends Controller
             return response()->json(['message' => 'Non autorisé'], 403);
         }
 
+        // Vérifier si l'adresse est liée à des commandes
+        if ($address->orders()->exists()) {
+            return response()->json([
+                'message' => 'Cette adresse est liée à des commandes et ne peut pas être supprimée',
+            ], 409);
+        }
+
         $wasDefault = $address->is_default;
         $address->delete();
 

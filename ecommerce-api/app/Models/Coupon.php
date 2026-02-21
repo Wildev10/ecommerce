@@ -12,8 +12,8 @@ class Coupon extends Model
     protected $fillable = [
         'code',
         'type',
-        'value',
-        'min_order_amount',
+        'discount',
+        'min_amount',
         'max_uses',
         'used_count',
         'starts_at',
@@ -22,15 +22,15 @@ class Coupon extends Model
     ];
 
     protected $casts = [
-        'value' => 'decimal:2',
-        'min_order_amount' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'min_amount' => 'decimal:2',
         'is_active' => 'boolean',
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 
     const TYPE_FIXED = 'fixed';
-    const TYPE_PERCENTAGE = 'percentage';
+    const TYPE_PERCENTAGE = 'percent';
 
     public function isValid()
     {
@@ -44,14 +44,14 @@ class Coupon extends Model
 
     public function calculateDiscount($amount)
     {
-        if ($this->min_order_amount && $amount < $this->min_order_amount) {
+        if ($this->min_amount && $amount < $this->min_amount) {
             return 0;
         }
 
         if ($this->type === self::TYPE_PERCENTAGE) {
-            return round($amount * ($this->value / 100), 2);
+            return round($amount * ($this->discount / 100), 2);
         }
 
-        return min($this->value, $amount);
+        return min($this->discount, $amount);
     }
 }

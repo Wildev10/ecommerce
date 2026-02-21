@@ -41,10 +41,11 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    // GET /api/products/{slug}
-    public function show($slug)
+    // GET /api/products/{product}
+    public function show($id)
     {
-        $product = Product::where('slug', $slug)
+        $product = Product::where('id', $id)
+            ->orWhere('slug', $id)
             ->with(['category', 'seller', 'reviews.user'])
             ->firstOrFail();
 
@@ -91,24 +92,20 @@ class ProductController extends Controller
         }
 
         $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'category_id' => 'sometimes|exists:categories,id',
+            'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
+            'price' => 'sometimes|numeric|min:0',
+            'stock' => 'sometimes|integer|min:0',
         ]);
 
-        $product->update([
-            'category_id' => $request->category_id,
-            'name' => $request->name,
-            'slug' => Str::slug($request->name) . '-' . uniqid(),
-            'description' => $request->description,
-            'price' => $request->price,
-            'compare_price' => $request->compare_price,
-            'stock' => $request->stock,
-            'image' => $request->image ?? $product->image,
-            'gallery' => $request->gallery ?? $product->gallery,
-        ]);
+        $data = $request->only(['category_id', 'name', 'description', 'price', 'compare_price', 'stock', 'image', 'gallery']);
+
+        if (isset($data['name'])) {
+            $data['slug'] = Str::slug($data['name']) . '-' . uniqid();
+        }
+
+        $product->update($data);
 
         return response()->json($product);
     }

@@ -25,9 +25,9 @@ class OrderController extends Controller
         } elseif ($user->role === 'seller') {
             // Vendeur voit les commandes contenant ses produits
             $orders = Order::whereHas('items', function ($q) use ($user) {
-                $q->where('seller_id', $user->id);
+                $q->whereHas('product', fn($p) => $p->where('seller_id', $user->id));
             })->with(['user', 'items' => function ($q) use ($user) {
-                $q->where('seller_id', $user->id);
+                $q->whereHas('product', fn($p) => $p->where('seller_id', $user->id));
             }, 'address'])->latest()->paginate(15);
         } else {
             $orders = Order::where('user_id', $user->id)
@@ -58,9 +58,10 @@ class OrderController extends Controller
         }
 
         // Récupérer les articles du panier
-        $cartItems = CartItem::where('user_id', $user->id)
+        $cart = \App\Models\Cart::where('user_id', $user->id)->first();
+        $cartItems = $cart ? CartItem::where('cart_id', $cart->id)
             ->with('product')
-            ->get();
+            ->get() : collect([]);
 
         if ($cartItems->isEmpty()) {
             return response()->json(['message' => 'Votre panier est vide'], 400);
@@ -107,7 +108,7 @@ class OrderController extends Controller
 
         // Créer la commande dans une transaction
         $order = DB::transaction(function () use (
-            $user, $cartItems, $subtotal, $discount, $shippingFee, $total,
+            $user, $cart, $cartItems, $subtotal, $discount, $shippingFee, $total,
             $couponId, $request
         ) {
             // Créer la commande
@@ -131,11 +132,9 @@ class OrderController extends Controller
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'seller_id' => $item->product->user_id,
                     'product_name' => $item->product->name,
-                    'product_image' => $item->product->image,
+                    'product_price' => $item->product->price,
                     'quantity' => $item->quantity,
-                    'price' => $item->product->price,
                     'total' => $item->quantity * $item->product->price,
                 ]);
 
@@ -150,13 +149,16 @@ class OrderController extends Controller
 
             // Historique de statut
             $order->statusHistory()->create([
-                'status' => Order::STATUS_PENDING,
-                'comment' => 'Commande créée',
+                'old_status' => null,
+                'new_status' => Order::STATUS_PENDING,
+                'note' => 'Commande créée',
                 'changed_by' => $user->id,
             ]);
 
             // Vider le panier
-            CartItem::where('user_id', $user->id)->delete();
+            if ($cart) {
+                CartItem::where('cart_id', $cart->id)->delete();
+            }
 
             return $order;
         });
@@ -180,7 +182,7 @@ class OrderController extends Controller
             $order = $query->findOrFail($id);
         } elseif ($user->role === 'seller') {
             $order = $query->whereHas('items', function ($q) use ($user) {
-                $q->where('seller_id', $user->id);
+                $q->whereHas('product', fn($p) => $p->where('seller_id', $user->id));
             })->findOrFail($id);
         } else {
             $order = $query->where('user_id', $user->id)->findOrFail($id);
@@ -202,7 +204,7 @@ class OrderController extends Controller
 
         // Vérification des permissions
         if ($user->role === 'seller') {
-            $hasSellerItems = $order->items()->where('seller_id', $user->id)->exists();
+            $hasSellerItems = $order->items()->whereHas('product', fn($p) => $p->where('seller_id', $user->id))->exists();
             if (!$hasSellerItems) {
                 return response()->json(['message' => 'Non autorisé'], 403);
             }
@@ -226,8 +228,9 @@ class OrderController extends Controller
 
         // Historique
         $order->statusHistory()->create([
-            'status' => $request->status,
-            'comment' => $request->comment ?? 'Statut mis à jour vers ' . $request->status,
+            'old_status' => $order->getOriginal('status'),
+            'new_status' => $request->status,
+            'note' => $request->comment ?? 'Statut mis à jour vers ' . $request->status,
             'changed_by' => $user->id,
         ]);
 
@@ -260,8 +263,9 @@ class OrderController extends Controller
             $order->update(['status' => Order::STATUS_CANCELLED]);
 
             $order->statusHistory()->create([
-                'status' => Order::STATUS_CANCELLED,
-                'comment' => 'Commande annulée par le client',
+                'old_status' => $order->getOriginal('status'),
+                'new_status' => Order::STATUS_CANCELLED,
+                'note' => 'Commande annulée par le client',
                 'changed_by' => $user->id,
             ]);
         });

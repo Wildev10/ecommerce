@@ -34,7 +34,7 @@ class AdminController extends Controller
     public function updateRole(Request $request, $id)
     {
         $request->validate([
-            'role' => 'required|in:client,seller,admin',
+            'role' => 'required|in:buyer,seller,admin',
         ]);
 
         $user = User::findOrFail($id);
@@ -67,8 +67,9 @@ class AdminController extends Controller
         $order->update(['status' => $request->status]);
 
         $order->statusHistory()->create([
-            'status' => $request->status,
-            'comment' => 'Mis à jour par admin',
+            'old_status' => $order->getOriginal('status'),
+            'new_status' => $request->status,
+            'note' => 'Mis à jour par admin',
             'changed_by' => $request->user()->id,
         ]);
 

@@ -39,7 +39,7 @@ class Order extends Model
     const STATUS_DELIVERED = 'delivered';
     const STATUS_CANCELLED = 'cancelled';
 
-    const PAYMENT_PENDING = 'pending';
+    const PAYMENT_PENDING = 'unpaid';
     const PAYMENT_PAID = 'paid';
     const PAYMENT_FAILED = 'failed';
     const PAYMENT_REFUNDED = 'refunded';
