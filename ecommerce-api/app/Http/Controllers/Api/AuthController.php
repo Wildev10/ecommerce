@@ -8,10 +8,12 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
+use App\Mail\WelcomeMail;
 
 class AuthController extends Controller
 {
@@ -38,6 +40,8 @@ class AuthController extends Controller
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        Mail::to($user)->send(new WelcomeMail($user));
 
         return $this->success([
             'user'  => $user,

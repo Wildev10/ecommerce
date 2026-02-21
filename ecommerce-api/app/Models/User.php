@@ -77,5 +77,15 @@ public function addresses()
     return $this->hasMany(Address::class);
 }
 
+public function wishlists()
+{
+    return $this->hasMany(Wishlist::class);
+}
+
+public function wishlistProducts()
+{
+    return $this->belongsToMany(Product::class, 'wishlists')->withTimestamps();
+}
+
 
 }

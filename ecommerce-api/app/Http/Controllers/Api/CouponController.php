@@ -15,11 +15,11 @@ class CouponController extends Controller
      * GET /api/admin/coupons — Lister tous les coupons
      * Accès : Admin
      */
-    public function index()
+    public function index(Request $request)
     {
-        $coupons = Coupon::latest()->get();
+        $coupons = Coupon::latest()->paginate($request->get('per_page', 15));
 
-        return $this->success($coupons, 'Liste des coupons');
+        return $this->paginated($coupons, 'Liste des coupons');
     }
 
     /**

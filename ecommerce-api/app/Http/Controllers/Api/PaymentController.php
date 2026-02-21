@@ -7,6 +7,8 @@ use App\Models\Payment;
 use App\Models\Order;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PaymentConfirmationMail;
 
 class PaymentController extends Controller
 {
@@ -47,6 +49,9 @@ class PaymentController extends Controller
             'transaction_id' => $payment->transaction_id,
         ]);
 
+        $payment->load(['user', 'order']);
+        Mail::to(auth()->user())->send(new PaymentConfirmationMail($payment));
+
         return $this->success($payment, 'Paiement effectué avec succès', 201);
     }
 
@@ -54,14 +59,14 @@ class PaymentController extends Controller
      * GET /api/payments — Voir mes paiements
      * Accès : Authentifié
      */
-    public function myPayments()
+    public function myPayments(Request $request)
     {
         $payments = Payment::where('user_id', auth()->id())
             ->with('order')
             ->latest()
-            ->get();
+            ->paginate($request->get('per_page', 15));
 
-        return $this->success($payments, 'Mes paiements');
+        return $this->paginated($payments, 'Mes paiements');
     }
 
     /**
@@ -83,10 +88,63 @@ class PaymentController extends Controller
      * GET /api/admin/payments — Tous les paiements (admin)
      * Accès : Admin uniquement
      */
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::with(['order', 'user'])->latest()->get();
+        $payments = Payment::with(['order', 'user'])
+            ->latest()
+            ->paginate($request->get('per_page', 15));
 
-        return $this->success($payments, 'Liste des paiements');
+        return $this->paginated($payments, 'Liste des paiements');
+    }
+
+    /**
+     * POST /api/admin/orders/{orderId}/refund — Rembourser une commande
+     * Accès : Admin uniquement
+     */
+    public function refund(Request $request, $orderId)
+    {
+        $order = Order::with('payment')->findOrFail($orderId);
+
+        if (!$order->payment) {
+            return $this->error('Aucun paiement trouvé pour cette commande', 404);
+        }
+
+        if ($order->payment->status === 'refunded') {
+            return $this->error('Cette commande a déjà été remboursée', 400);
+        }
+
+        if ($order->payment->status !== 'completed') {
+            return $this->error('Seuls les paiements complétés peuvent être remboursés', 400);
+        }
+
+        $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $order->payment->update([
+            'status' => 'refunded',
+        ]);
+
+        $order->update([
+            'status'         => 'refunded',
+            'payment_status' => 'refunded',
+        ]);
+
+        // Remettre le stock
+        foreach ($order->items as $item) {
+            \App\Models\Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+        }
+
+        $order->statusHistory()->create([
+            'old_status' => $order->getOriginal('status') ?? $order->status,
+            'new_status' => 'refunded',
+            'note'       => $request->reason ?? 'Remboursement effectué par admin',
+            'changed_by' => auth()->id(),
+        ]);
+
+        return $this->success([
+            'order'   => $order->fresh(['items', 'payment', 'statusHistory']),
+            'payment' => $order->payment->fresh(),
+        ], 'Remboursement effectué avec succès');
     }
 }

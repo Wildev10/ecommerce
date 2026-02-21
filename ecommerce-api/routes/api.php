@@ -12,6 +12,9 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\Api\SellerController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\AdminController;
 
 // ╔═══════════════════════════════════════════════╗
@@ -45,6 +48,9 @@ Route::get('/categories/{category}', [CategoryController::class, 'show']);
 // Avis produits (lecture publique)
 Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
 
+// Recherche globale
+Route::get('/search', [SearchController::class, 'index']);
+
 // ╔═══════════════════════════════════════════════╗
 // ║         ROUTES PROTÉGÉES (auth:sanctum)       ║
 // ╚═══════════════════════════════════════════════╝
@@ -71,6 +77,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Coupons — vérification client ──
     Route::post('/coupons/verify', [CouponController::class, 'verify']);
 
+    // ── Favoris (Wishlist) ──
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
+    Route::get('/wishlist/check/{productId}', [WishlistController::class, 'check']);
+    Route::delete('/wishlist', [WishlistController::class, 'clear']);
+
     // ── Commandes ──
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
@@ -78,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/apply-coupon', [OrderController::class, 'applyCoupon']);
+    Route::get('/orders/{id}/history', [OrderController::class, 'history']);
 
     // ── Paiement ──
     Route::post('/orders/{orderId}/pay', [PaymentController::class, 'pay']);
@@ -95,6 +109,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
         Route::get('/seller/products', [ProductController::class, 'myProducts']);
+        Route::get('/seller/dashboard', [SellerController::class, 'dashboard']);
+        Route::get('/seller/orders', [SellerController::class, 'orders']);
+        Route::get('/seller/orders/{id}', [SellerController::class, 'orderShow']);
     });
 
     // ╔═══════════════════════════════════════════════╗
@@ -106,6 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Utilisateurs
         Route::get('/users', [AdminController::class, 'users']);
+        Route::get('/users/{id}', [AdminController::class, 'userShow']);
         Route::put('/users/{id}/role', [AdminController::class, 'updateRole']);
         Route::put('/users/{id}/toggle', [AdminController::class, 'toggleUser']);
 
@@ -127,5 +145,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Paiements (admin)
         Route::get('/payments', [PaymentController::class, 'index']);
+
+        // Remboursements
+        Route::post('/orders/{orderId}/refund', [PaymentController::class, 'refund']);
+
+        // Modération avis
+        Route::get('/reviews', [AdminController::class, 'reviews']);
+        Route::delete('/reviews/{id}', [AdminController::class, 'deleteReview']);
     });
 });

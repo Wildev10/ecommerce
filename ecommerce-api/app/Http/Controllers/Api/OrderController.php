@@ -11,6 +11,10 @@ use App\Models\Product;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderConfirmationMail;
+use App\Mail\OrderStatusChangedMail;
+use App\Mail\OrderCancelledMail;
 
 class OrderController extends Controller
 {
@@ -163,6 +167,8 @@ class OrderController extends Controller
 
         $order->load(['items', 'address', 'statusHistory']);
 
+        Mail::to($user)->send(new OrderConfirmationMail($order));
+
         return $this->success($order, 'Commande créée avec succès', 201);
     }
 
@@ -242,6 +248,8 @@ class OrderController extends Controller
 
         $order->load(['items', 'statusHistory']);
 
+        Mail::to($order->user)->send(new OrderStatusChangedMail($order, $oldStatus, $request->status));
+
         return $this->success($order, 'Statut mis à jour');
     }
 
@@ -276,6 +284,8 @@ class OrderController extends Controller
         });
 
         $order->load(['items', 'statusHistory']);
+
+        Mail::to($user)->send(new OrderCancelledMail($order));
 
         return $this->success($order, 'Commande annulée avec succès');
     }
@@ -315,5 +325,28 @@ class OrderController extends Controller
             'discount'             => $discount,
             'total_after_discount' => $subtotal - $discount,
         ], 'Code promo valide');
+    }
+
+    /**
+     * GET /api/orders/{id}/history — Historique des statuts d'une commande
+     * Accès : Authentifié (propriétaire, seller concerné, ou admin)
+     */
+    public function history(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $query = Order::with('statusHistory.changedBy');
+
+        if ($user->role === 'admin') {
+            $order = $query->findOrFail($id);
+        } elseif ($user->role === 'seller') {
+            $order = $query->whereHas('items', function ($q) use ($user) {
+                $q->whereHas('product', fn ($p) => $p->where('seller_id', $user->id));
+            })->findOrFail($id);
+        } else {
+            $order = $query->where('user_id', $user->id)->findOrFail($id);
+        }
+
+        return $this->success($order->statusHistory, 'Historique des statuts');
     }
 }

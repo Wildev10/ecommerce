@@ -7,8 +7,11 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Payment;
+use App\Models\Review;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderStatusChangedMail;
 
 class AdminController extends Controller
 {
@@ -150,8 +153,11 @@ class AdminController extends Controller
             'changed_by' => $request->user()->id,
         ]);
 
+        $order->load(['user', 'statusHistory']);
+        Mail::to($order->user)->send(new OrderStatusChangedMail($order, $oldStatus, $request->status));
+
         return $this->success(
-            $order->load('statusHistory'),
+            $order,
             'Statut mis à jour'
         );
     }
@@ -193,5 +199,56 @@ class AdminController extends Controller
         $status = $product->is_active ? 'activé' : 'désactivé';
 
         return $this->success($product, "Produit {$status}");
+    }
+
+    /**
+     * GET /api/admin/users/{id} — Détail d'un utilisateur
+     * Accès : Admin
+     */
+    public function userShow($id)
+    {
+        $user = User::with(['orders' => function ($q) {
+            $q->latest()->take(10);
+        }, 'addresses', 'reviews.product'])->findOrFail($id);
+
+        return $this->success($user, 'Détail utilisateur');
+    }
+
+    /**
+     * GET /api/admin/reviews — Liste de tous les avis (modération)
+     * Accès : Admin
+     */
+    public function reviews(Request $request)
+    {
+        $query = Review::with(['user:id,name,email', 'product:id,name,slug']);
+
+        if ($request->filled('rating')) {
+            $query->where('rating', $request->rating);
+        }
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('comment', 'like', "%{$search}%");
+        }
+
+        $reviews = $query->latest()->paginate($request->get('per_page', 15));
+
+        return $this->paginated($reviews, 'Liste des avis (admin)');
+    }
+
+    /**
+     * DELETE /api/admin/reviews/{id} — Supprimer un avis (modération)
+     * Accès : Admin
+     */
+    public function deleteReview($id)
+    {
+        $review = Review::findOrFail($id);
+        $review->delete();
+
+        return $this->success(null, 'Avis supprimé par l\'admin');
     }
 }

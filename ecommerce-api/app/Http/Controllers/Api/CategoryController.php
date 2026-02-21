@@ -76,17 +76,17 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         $request->validate([
-            'name'        => 'required|string|max:255',
+            'name'        => 'sometimes|string|max:255|unique:categories,name,' . $category->id,
             'description' => 'nullable|string',
             'image'       => 'nullable|string',
         ]);
 
-        $category->update([
-            'name'        => $request->name,
-            'slug'        => Str::slug($request->name),
-            'description' => $request->description,
-            'image'       => $request->image,
-        ]);
+        $data = $request->only(['name', 'description', 'image']);
+        if (isset($data['name'])) {
+            $data['slug'] = Str::slug($data['name']);
+        }
+
+        $category->update($data);
 
         return $this->success($category, 'Catégorie modifiée');
     }
