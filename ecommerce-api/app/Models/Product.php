@@ -27,7 +27,36 @@ class Product extends Model
         'gallery' => 'array',
         'price' => 'decimal:2',
         'compare_price' => 'decimal:2',
+        'stock' => 'integer',
+        'is_active' => 'boolean',
     ];
+
+    protected $appends = ['image_url', 'gallery_urls'];
+
+    // ===== ACCESSORS =====
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) return null;
+
+        if (str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+
+        return url('storage/' . $this->image);
+    }
+
+    public function getGalleryUrlsAttribute(): array
+    {
+        if (!$this->gallery) return [];
+
+        return collect($this->gallery)->map(function ($img) {
+            if (str_starts_with($img, 'http')) return $img;
+            return url('storage/' . $img);
+        })->toArray();
+    }
+
+    // ===== RELATIONS =====
 
     public function seller()
     {

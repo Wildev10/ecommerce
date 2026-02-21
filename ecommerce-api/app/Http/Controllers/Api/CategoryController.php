@@ -4,84 +4,107 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
-    // GET /api/categories
+    use ApiResponse;
+
+    /**
+     * GET /api/categories — Liste des catégories actives
+     * Accès : Public
+     */
     public function index()
     {
         $categories = Category::where('is_active', true)
             ->withCount('products')
             ->get();
 
-        return response()->json($categories);
+        return $this->success($categories, 'Liste des catégories');
     }
 
-    // GET /api/categories/{slug}
+    /**
+     * GET /api/categories/{slug} — Détail d'une catégorie avec ses produits
+     * Accès : Public
+     */
     public function show($slug)
     {
         $category = Category::where('slug', $slug)
-            ->with('products')
+            ->orWhere('id', $slug)
+            ->with(['products' => function ($q) {
+                $q->where('is_active', true)->with('seller');
+            }])
             ->firstOrFail();
 
-        return response()->json($category);
+        return $this->success($category, 'Détail de la catégorie');
     }
 
-    // POST /api/categories (Admin only)
-   public function store(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255|unique:categories,name',
-        'description' => 'nullable|string',
-        'image' => 'nullable|string',
-    ]);
-
-    try {
-        $category = Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
-            'image' => $request->image,
+    /**
+     * POST /api/admin/categories — Créer une catégorie
+     * Accès : Admin uniquement
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255|unique:categories,name',
+            'description' => 'nullable|string',
+            'image'       => 'nullable|string',
         ]);
 
-        return response()->json($category, 201);
-    } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-        return response()->json([
-            'message' => 'Cette catégorie existe déjà.'
-        ], 422);
+        try {
+            $category = Category::create([
+                'name'        => $request->name,
+                'slug'        => Str::slug($request->name),
+                'description' => $request->description,
+                'image'       => $request->image,
+            ]);
+
+            return $this->success($category, 'Catégorie créée avec succès', 201);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return $this->error('Cette catégorie existe déjà.', 409);
+        }
     }
-}
 
-
-    // PUT /api/categories/{id}
+    /**
+     * PUT /api/admin/categories/{id} — Modifier une catégorie
+     * Accès : Admin uniquement
+     */
     public function update(Request $request, $id)
     {
         $category = Category::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string',
+            'image'       => 'nullable|string',
         ]);
 
         $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'name'        => $request->name,
+            'slug'        => Str::slug($request->name),
             'description' => $request->description,
-            'image' => $request->image,
+            'image'       => $request->image,
         ]);
 
-        return response()->json($category);
+        return $this->success($category, 'Catégorie modifiée');
     }
 
-    // DELETE /api/categories/{id}
+    /**
+     * DELETE /api/admin/categories/{id} — Supprimer une catégorie
+     * Accès : Admin uniquement
+     */
     public function destroy($id)
     {
         $category = Category::findOrFail($id);
+
+        if ($category->products()->count() > 0) {
+            return $this->error('Impossible de supprimer : cette catégorie contient des produits', 409);
+        }
+
         $category->delete();
 
-        return response()->json(['message' => 'Catégorie supprimée']);
+        return $this->success(null, 'Catégorie supprimée');
     }
 }

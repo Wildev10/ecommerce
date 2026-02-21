@@ -8,12 +8,18 @@ use App\Models\OrderItem;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\Product;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    // Liste des commandes (client voit les siennes, admin voit tout)
+    use ApiResponse;
+
+    /**
+     * GET /api/orders — Liste des commandes
+     * Accès : Authentifié (filtre automatique par rôle)
+     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -21,32 +27,34 @@ class OrderController extends Controller
         if ($user->role === 'admin') {
             $orders = Order::with(['user', 'items', 'address'])
                 ->latest()
-                ->paginate(15);
+                ->paginate($request->get('per_page', 15));
         } elseif ($user->role === 'seller') {
-            // Vendeur voit les commandes contenant ses produits
             $orders = Order::whereHas('items', function ($q) use ($user) {
-                $q->whereHas('product', fn($p) => $p->where('seller_id', $user->id));
+                $q->whereHas('product', fn ($p) => $p->where('seller_id', $user->id));
             })->with(['user', 'items' => function ($q) use ($user) {
-                $q->whereHas('product', fn($p) => $p->where('seller_id', $user->id));
-            }, 'address'])->latest()->paginate(15);
+                $q->whereHas('product', fn ($p) => $p->where('seller_id', $user->id));
+            }, 'address'])->latest()->paginate($request->get('per_page', 15));
         } else {
             $orders = Order::where('user_id', $user->id)
                 ->with(['items', 'address'])
                 ->latest()
-                ->paginate(15);
+                ->paginate($request->get('per_page', 15));
         }
 
-        return response()->json($orders);
+        return $this->paginated($orders, 'Liste des commandes');
     }
 
-    // Créer une commande depuis le panier
+    /**
+     * POST /api/orders — Créer une commande depuis le panier
+     * Accès : Authentifié (buyer)
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'address_id' => 'required|exists:addresses,id',
+            'address_id'     => 'required|exists:addresses,id',
             'payment_method' => 'required|in:cash_on_delivery,mobile_money,card',
-            'coupon_code' => 'nullable|string',
-            'notes' => 'nullable|string|max:500',
+            'coupon_code'    => 'nullable|string',
+            'notes'          => 'nullable|string|max:500',
         ]);
 
         $user = $request->user();
@@ -54,7 +62,7 @@ class OrderController extends Controller
         // Vérifier que l'adresse appartient à l'utilisateur
         $address = $user->addresses()->find($request->address_id);
         if (!$address) {
-            return response()->json(['message' => 'Adresse non trouvée'], 404);
+            return $this->error('Adresse non trouvée', 404);
         }
 
         // Récupérer les articles du panier
@@ -64,27 +72,24 @@ class OrderController extends Controller
             ->get() : collect([]);
 
         if ($cartItems->isEmpty()) {
-            return response()->json(['message' => 'Votre panier est vide'], 400);
+            return $this->error('Votre panier est vide', 400);
         }
 
         // Vérifier le stock de chaque produit
         foreach ($cartItems as $item) {
             if (!$item->product || !$item->product->is_active) {
-                return response()->json([
-                    'message' => "Le produit '{$item->product->name}' n'est plus disponible"
-                ], 400);
+                return $this->error("Le produit '{$item->product->name}' n'est plus disponible", 400);
             }
             if ($item->quantity > $item->product->stock) {
-                return response()->json([
-                    'message' => "Stock insuffisant pour '{$item->product->name}'. Disponible: {$item->product->stock}"
-                ], 400);
+                return $this->error(
+                    "Stock insuffisant pour '{$item->product->name}'. Disponible: {$item->product->stock}",
+                    400
+                );
             }
         }
 
         // Calculer le sous-total
-        $subtotal = $cartItems->sum(function ($item) {
-            return $item->quantity * $item->product->price;
-        });
+        $subtotal = $cartItems->sum(fn ($item) => $item->quantity * $item->product->price);
 
         // Coupon
         $discount = 0;
@@ -94,16 +99,15 @@ class OrderController extends Controller
             $coupon = Coupon::where('code', $request->coupon_code)->first();
 
             if (!$coupon || !$coupon->isValid()) {
-                return response()->json(['message' => 'Code promo invalide ou expiré'], 400);
+                return $this->error('Code promo invalide ou expiré', 400);
             }
 
             $discount = $coupon->calculateDiscount($subtotal);
             $couponId = $coupon->id;
         }
 
-        // Frais de livraison (logique simple)
+        // Frais de livraison
         $shippingFee = $subtotal >= 50000 ? 0 : 2000;
-
         $total = $subtotal - $discount + $shippingFee;
 
         // Créer la commande dans une transaction
@@ -111,51 +115,45 @@ class OrderController extends Controller
             $user, $cart, $cartItems, $subtotal, $discount, $shippingFee, $total,
             $couponId, $request
         ) {
-            // Créer la commande
             $order = Order::create([
-                'user_id' => $user->id,
-                'address_id' => $request->address_id,
-                'coupon_id' => $couponId,
-                'order_number' => Order::generateOrderNumber(),
-                'status' => Order::STATUS_PENDING,
+                'user_id'        => $user->id,
+                'address_id'     => $request->address_id,
+                'coupon_id'      => $couponId,
+                'order_number'   => Order::generateOrderNumber(),
+                'status'         => Order::STATUS_PENDING,
                 'payment_status' => Order::PAYMENT_PENDING,
                 'payment_method' => $request->payment_method,
-                'subtotal' => $subtotal,
-                'discount' => $discount,
-                'shipping_fee' => $shippingFee,
-                'total' => $total,
-                'notes' => $request->notes,
+                'subtotal'       => $subtotal,
+                'discount'       => $discount,
+                'shipping_fee'   => $shippingFee,
+                'total'          => $total,
+                'notes'          => $request->notes,
             ]);
 
-            // Créer les items de commande et décrémenter le stock
             foreach ($cartItems as $item) {
                 OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product->name,
+                    'order_id'      => $order->id,
+                    'product_id'    => $item->product_id,
+                    'product_name'  => $item->product->name,
                     'product_price' => $item->product->price,
-                    'quantity' => $item->quantity,
-                    'total' => $item->quantity * $item->product->price,
+                    'quantity'      => $item->quantity,
+                    'total'         => $item->quantity * $item->product->price,
                 ]);
 
-                // Décrémenter le stock
                 $item->product->decrement('stock', $item->quantity);
             }
 
-            // Incrémenter l'utilisation du coupon
             if ($couponId) {
                 Coupon::where('id', $couponId)->increment('used_count');
             }
 
-            // Historique de statut
             $order->statusHistory()->create([
                 'old_status' => null,
                 'new_status' => Order::STATUS_PENDING,
-                'note' => 'Commande créée',
+                'note'       => 'Commande créée',
                 'changed_by' => $user->id,
             ]);
 
-            // Vider le panier
             if ($cart) {
                 CartItem::where('cart_id', $cart->id)->delete();
             }
@@ -165,55 +163,63 @@ class OrderController extends Controller
 
         $order->load(['items', 'address', 'statusHistory']);
 
-        return response()->json([
-            'message' => 'Commande créée avec succès',
-            'order' => $order,
-        ], 201);
+        return $this->success($order, 'Commande créée avec succès', 201);
     }
 
-    // Détails d'une commande
+    /**
+     * GET /api/orders/{id} — Détails d'une commande
+     * Accès : Authentifié (propriétaire, seller concerné, ou admin)
+     */
     public function show(Request $request, $id)
     {
         $user = $request->user();
 
-        $query = Order::with(['items.product', 'address', 'coupon', 'statusHistory.changedBy', 'user']);
+        $query = Order::with(['items.product', 'address', 'coupon', 'statusHistory.changedBy', 'user', 'payment']);
 
         if ($user->role === 'admin') {
             $order = $query->findOrFail($id);
         } elseif ($user->role === 'seller') {
             $order = $query->whereHas('items', function ($q) use ($user) {
-                $q->whereHas('product', fn($p) => $p->where('seller_id', $user->id));
+                $q->whereHas('product', fn ($p) => $p->where('seller_id', $user->id));
             })->findOrFail($id);
         } else {
             $order = $query->where('user_id', $user->id)->findOrFail($id);
         }
 
-        return response()->json($order);
+        return $this->success($order, 'Détail de la commande');
     }
 
-    // Mettre à jour le statut (admin/seller)
+    /**
+     * PUT /api/orders/{id}/status — Mettre à jour le statut
+     * Accès : Admin ou Seller concerné
+     */
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:confirmed,processing,shipped,delivered,cancelled',
+            'status'  => 'required|in:confirmed,processing,shipped,delivered,cancelled',
             'comment' => 'nullable|string|max:500',
         ]);
 
         $user = $request->user();
         $order = Order::findOrFail($id);
 
+        // Sauvegarder l'ancien statut AVANT la mise à jour
+        $oldStatus = $order->status;
+
         // Vérification des permissions
         if ($user->role === 'seller') {
-            $hasSellerItems = $order->items()->whereHas('product', fn($p) => $p->where('seller_id', $user->id))->exists();
+            $hasSellerItems = $order->items()
+                ->whereHas('product', fn ($p) => $p->where('seller_id', $user->id))
+                ->exists();
             if (!$hasSellerItems) {
-                return response()->json(['message' => 'Non autorisé'], 403);
+                return $this->error('Non autorisé', 403);
             }
         } elseif ($user->role !== 'admin') {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return $this->error('Non autorisé', 403);
         }
 
-        // Logique d'annulation : remettre le stock
-        if ($request->status === 'cancelled' && $order->status !== Order::STATUS_CANCELLED) {
+        // Annulation : remettre le stock
+        if ($request->status === 'cancelled' && $oldStatus !== Order::STATUS_CANCELLED) {
             foreach ($order->items as $item) {
                 Product::where('id', $item->product_id)->increment('stock', $item->quantity);
             }
@@ -221,41 +227,40 @@ class OrderController extends Controller
 
         $order->update(['status' => $request->status]);
 
-        // Si livré, marquer comme payé (pour cash on delivery)
+        // Si livré, marquer comme payé (cash on delivery)
         if ($request->status === 'delivered' && $order->payment_method === 'cash_on_delivery') {
             $order->update(['payment_status' => Order::PAYMENT_PAID]);
         }
 
         // Historique
         $order->statusHistory()->create([
-            'old_status' => $order->getOriginal('status'),
+            'old_status' => $oldStatus,
             'new_status' => $request->status,
-            'note' => $request->comment ?? 'Statut mis à jour vers ' . $request->status,
+            'note'       => $request->comment ?? 'Statut mis à jour vers ' . $request->status,
             'changed_by' => $user->id,
         ]);
 
         $order->load(['items', 'statusHistory']);
 
-        return response()->json([
-            'message' => 'Statut mis à jour',
-            'order' => $order,
-        ]);
+        return $this->success($order, 'Statut mis à jour');
     }
 
-    // Annuler une commande (client)
+    /**
+     * POST /api/orders/{id}/cancel — Annuler une commande (client)
+     * Accès : Authentifié (propriétaire, commande pending/confirmed)
+     */
     public function cancel(Request $request, $id)
     {
         $user = $request->user();
         $order = Order::where('user_id', $user->id)->findOrFail($id);
 
         if (!in_array($order->status, [Order::STATUS_PENDING, Order::STATUS_CONFIRMED])) {
-            return response()->json([
-                'message' => 'Cette commande ne peut plus être annulée'
-            ], 400);
+            return $this->error('Cette commande ne peut plus être annulée', 400);
         }
 
-        DB::transaction(function () use ($order, $user) {
-            // Remettre le stock
+        $oldStatus = $order->status;
+
+        DB::transaction(function () use ($order, $user, $oldStatus) {
             foreach ($order->items as $item) {
                 Product::where('id', $item->product_id)->increment('stock', $item->quantity);
             }
@@ -263,22 +268,22 @@ class OrderController extends Controller
             $order->update(['status' => Order::STATUS_CANCELLED]);
 
             $order->statusHistory()->create([
-                'old_status' => $order->getOriginal('status'),
+                'old_status' => $oldStatus,
                 'new_status' => Order::STATUS_CANCELLED,
-                'note' => 'Commande annulée par le client',
+                'note'       => 'Commande annulée par le client',
                 'changed_by' => $user->id,
             ]);
         });
 
         $order->load(['items', 'statusHistory']);
 
-        return response()->json([
-            'message' => 'Commande annulée avec succès',
-            'order' => $order,
-        ]);
+        return $this->success($order, 'Commande annulée avec succès');
     }
 
-    // Appliquer un coupon (vérification avant commande)
+    /**
+     * POST /api/orders/apply-coupon — Vérifier un coupon avant commande
+     * Accès : Authentifié
+     */
     public function applyCoupon(Request $request)
     {
         $request->validate([
@@ -288,25 +293,27 @@ class OrderController extends Controller
         $coupon = Coupon::where('code', $request->code)->first();
 
         if (!$coupon || !$coupon->isValid()) {
-            return response()->json(['message' => 'Code promo invalide ou expiré'], 400);
+            return $this->error('Code promo invalide ou expiré', 400);
         }
 
-        // Calculer le total du panier
-        $cartItems = CartItem::where('user_id', $request->user()->id)->with('product')->get();
-        $subtotal = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
+        // Calculer le total du panier (correction: utiliser cart_id et non user_id)
+        $cart = \App\Models\Cart::where('user_id', $request->user()->id)->first();
+        $cartItems = $cart
+            ? CartItem::where('cart_id', $cart->id)->with('product')->get()
+            : collect([]);
 
+        $subtotal = $cartItems->sum(fn ($item) => $item->quantity * $item->product->price);
         $discount = $coupon->calculateDiscount($subtotal);
 
-        return response()->json([
-            'message' => 'Code promo valide',
+        return $this->success([
             'coupon' => [
-                'code' => $coupon->code,
-                'type' => $coupon->type,
-                'value' => $coupon->value,
+                'code'  => $coupon->code,
+                'type'  => $coupon->type,
+                'value' => $coupon->discount,
             ],
-            'subtotal' => $subtotal,
-            'discount' => $discount,
+            'subtotal'             => $subtotal,
+            'discount'             => $discount,
             'total_after_discount' => $subtotal - $discount,
-        ]);
+        ], 'Code promo valide');
     }
 }

@@ -4,19 +4,28 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Address;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class AddressController extends Controller
 {
-    // Lister mes adresses
+    use ApiResponse;
+
+    /**
+     * GET /api/addresses — Lister mes adresses
+     * Accès : Authentifié
+     */
     public function index()
     {
         $addresses = auth()->user()->addresses()->orderBy('is_default', 'desc')->get();
 
-        return response()->json($addresses);
+        return $this->success($addresses, 'Liste des adresses');
     }
 
-    // Créer une adresse
+    /**
+     * POST /api/addresses — Créer une adresse
+     * Accès : Authentifié
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -42,27 +51,30 @@ class AddressController extends Controller
         $validated['user_id'] = auth()->id();
         $address = Address::create($validated);
 
-        return response()->json([
-            'message' => 'Adresse ajoutée avec succès',
-            'address' => $address,
-        ], 201);
+        return $this->success($address, 'Adresse ajoutée avec succès', 201);
     }
 
-    // Voir une adresse
+    /**
+     * GET /api/addresses/{address} — Voir une adresse
+     * Accès : Authentifié (propriétaire)
+     */
     public function show(Address $address)
     {
         if ($address->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return $this->error('Non autorisé', 403);
         }
 
-        return response()->json($address);
+        return $this->success($address, 'Détail de l\'adresse');
     }
 
-    // Modifier une adresse
+    /**
+     * PUT /api/addresses/{address} — Modifier une adresse
+     * Accès : Authentifié (propriétaire)
+     */
     public function update(Request $request, Address $address)
     {
         if ($address->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return $this->error('Non autorisé', 403);
         }
 
         $validated = $request->validate([
@@ -82,24 +94,21 @@ class AddressController extends Controller
 
         $address->update($validated);
 
-        return response()->json([
-            'message' => 'Adresse modifiée avec succès',
-            'address' => $address,
-        ]);
+        return $this->success($address, 'Adresse modifiée avec succès');
     }
 
-    // Supprimer une adresse
+    /**
+     * DELETE /api/addresses/{address} — Supprimer une adresse
+     * Accès : Authentifié (propriétaire)
+     */
     public function destroy(Address $address)
     {
         if ($address->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return $this->error('Non autorisé', 403);
         }
 
-        // Vérifier si l'adresse est liée à des commandes
         if ($address->orders()->exists()) {
-            return response()->json([
-                'message' => 'Cette adresse est liée à des commandes et ne peut pas être supprimée',
-            ], 409);
+            return $this->error('Cette adresse est liée à des commandes et ne peut pas être supprimée', 409);
         }
 
         $wasDefault = $address->is_default;
@@ -112,24 +121,22 @@ class AddressController extends Controller
             }
         }
 
-        return response()->json([
-            'message' => 'Adresse supprimée avec succès',
-        ]);
+        return $this->success(null, 'Adresse supprimée avec succès');
     }
 
-    // Définir comme défaut
+    /**
+     * PATCH /api/addresses/{address}/default — Définir comme adresse par défaut
+     * Accès : Authentifié (propriétaire)
+     */
     public function setDefault(Address $address)
     {
         if ($address->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Non autorisé'], 403);
+            return $this->error('Non autorisé', 403);
         }
 
         auth()->user()->addresses()->update(['is_default' => false]);
         $address->update(['is_default' => true]);
 
-        return response()->json([
-            'message' => 'Adresse définie par défaut',
-            'address' => $address,
-        ]);
+        return $this->success($address, 'Adresse définie par défaut');
     }
 }

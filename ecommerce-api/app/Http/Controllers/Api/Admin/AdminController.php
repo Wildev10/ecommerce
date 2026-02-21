@@ -6,31 +6,63 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Payment;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    // Dashboard stats
+    use ApiResponse;
+
+    /**
+     * GET /api/admin/dashboard — Statistiques du dashboard
+     * Accès : Admin
+     */
     public function dashboard()
     {
-        return response()->json([
-            'total_users' => User::count(),
+        return $this->success([
+            'total_users'    => User::count(),
             'total_products' => Product::count(),
-            'total_orders' => Order::count(),
-            'total_revenue' => Order::where('payment_status', 'paid')->sum('total'),
+            'total_orders'   => Order::count(),
+            'total_revenue'  => Order::where('payment_status', 'paid')->sum('total'),
             'pending_orders' => Order::where('status', 'pending')->count(),
-            'recent_orders' => Order::with('user')->latest()->take(5)->get(),
-        ]);
+            'recent_orders'  => Order::with('user')->latest()->take(5)->get(),
+            'new_users_today' => User::whereDate('created_at', today())->count(),
+            'orders_today'   => Order::whereDate('created_at', today())->count(),
+        ], 'Dashboard administrateur');
     }
 
-    // Liste des utilisateurs
-    public function users()
+    /**
+     * GET /api/admin/users — Liste des utilisateurs
+     * Accès : Admin
+     */
+    public function users(Request $request)
     {
-        $users = User::latest()->paginate(15);
-        return response()->json($users);
+        $query = User::query();
+
+        // Filtre par rôle
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Recherche
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->latest()->paginate($request->get('per_page', 15));
+
+        return $this->paginated($users, 'Liste des utilisateurs');
     }
 
-    // Changer le rôle d'un utilisateur
+    /**
+     * PUT /api/admin/users/{id}/role — Changer le rôle d'un utilisateur
+     * Accès : Admin
+     */
     public function updateRole(Request $request, $id)
     {
         $request->validate([
@@ -38,25 +70,56 @@ class AdminController extends Controller
         ]);
 
         $user = User::findOrFail($id);
+
+        if ($user->id === auth()->id()) {
+            return $this->error('Vous ne pouvez pas modifier votre propre rôle', 400);
+        }
+
         $user->update(['role' => $request->role]);
 
-        return response()->json([
-            'message' => 'Rôle mis à jour',
-            'user' => $user,
-        ]);
+        return $this->success($user, 'Rôle mis à jour');
     }
 
-    // Toutes les commandes (admin)
-    public function orders()
+    /**
+     * PUT /api/admin/users/{id}/toggle — Activer/Désactiver un utilisateur
+     * Accès : Admin
+     */
+    public function toggleUser(Request $request, $id)
     {
-        $orders = Order::with(['user', 'items', 'address'])
-            ->latest()
-            ->paginate(15);
+        $user = User::findOrFail($id);
 
-        return response()->json($orders);
+        if ($user->id === auth()->id()) {
+            return $this->error('Vous ne pouvez pas vous désactiver vous-même', 400);
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        $status = $user->is_active ? 'activé' : 'désactivé';
+
+        return $this->success($user, "Utilisateur {$status}");
     }
 
-    // Mettre à jour le statut d'une commande
+    /**
+     * GET /api/admin/orders — Toutes les commandes
+     * Accès : Admin
+     */
+    public function orders(Request $request)
+    {
+        $query = Order::with(['user', 'items', 'address']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->latest()->paginate($request->get('per_page', 15));
+
+        return $this->paginated($orders, 'Liste des commandes');
+    }
+
+    /**
+     * PUT /api/admin/orders/{id}/status — Mettre à jour le statut d'une commande
+     * Accès : Admin
+     */
     public function updateOrderStatus(Request $request, $id)
     {
         $request->validate([
@@ -64,18 +127,71 @@ class AdminController extends Controller
         ]);
 
         $order = Order::findOrFail($id);
+        $oldStatus = $order->status;
+
+        // Si annulation, remettre le stock
+        if ($request->status === 'cancelled' && $oldStatus !== 'cancelled') {
+            foreach ($order->items as $item) {
+                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+            }
+        }
+
         $order->update(['status' => $request->status]);
 
+        // Si livré + cash on delivery, marquer comme payé
+        if ($request->status === 'delivered' && $order->payment_method === 'cash_on_delivery') {
+            $order->update(['payment_status' => 'paid']);
+        }
+
         $order->statusHistory()->create([
-            'old_status' => $order->getOriginal('status'),
+            'old_status' => $oldStatus,
             'new_status' => $request->status,
-            'note' => 'Mis à jour par admin',
+            'note'       => 'Mis à jour par admin',
             'changed_by' => $request->user()->id,
         ]);
 
-        return response()->json([
-            'message' => 'Statut mis à jour',
-            'order' => $order->load('statusHistory'),
-        ]);
+        return $this->success(
+            $order->load('statusHistory'),
+            'Statut mis à jour'
+        );
+    }
+
+    /**
+     * GET /api/admin/products — Tous les produits (admin)
+     * Accès : Admin
+     */
+    public function products(Request $request)
+    {
+        $query = Product::with(['category', 'seller']);
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $products = $query->latest()->paginate($request->get('per_page', 15));
+
+        return $this->paginated($products, 'Liste des produits (admin)');
+    }
+
+    /**
+     * PUT /api/admin/products/{id}/toggle — Activer/Désactiver un produit
+     * Accès : Admin
+     */
+    public function toggleProduct($id)
+    {
+        $product = Product::findOrFail($id);
+        $product->update(['is_active' => !$product->is_active]);
+
+        $status = $product->is_active ? 'activé' : 'désactivé';
+
+        return $this->success($product, "Produit {$status}");
     }
 }
