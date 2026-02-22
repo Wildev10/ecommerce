@@ -1,28 +1,53 @@
-'use client';
+// src/hooks/useCart.ts
 
 import { useState } from 'react';
-import api from '@/lib/axios';
 import { useCartStore } from '@/stores/cart-store';
-import { extractErrorMessage } from '@/lib/api-helpers';
-import { ApiResponse, Cart } from '@/types';
-import toast from 'react-hot-toast';
+import api from '@/lib/axios';
 
 export function useCart() {
   const [loading, setLoading] = useState(false);
-  const { cart, itemCount, setCart, clearCart } = useCartStore();
+  const {
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    getTotalItems,
+    getTotalPrice,
+  } = useCartStore();
 
   /**
-   * Récupérer le panier
+   * Ajouter un produit au panier
    */
-  const fetchCart = async () => {
+  const addToCart = async (
+    product: {
+      id: number;
+      name: string;
+      price: number;
+      image?: string;
+      stock: number;
+    },
+    quantity: number = 1
+  ) => {
     setLoading(true);
     try {
-      const response = await api.get<ApiResponse<Cart>>('/cart');
-      setCart(response.data.data!);
-    } catch (error: any) {
-      const message = extractErrorMessage(error);
-      if (error.response?.status !== 401) {
-        toast.error(message);
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        stock: product.stock,
+        quantity,
+      });
+
+      // Sync avec le backend (fire & forget)
+      try {
+        await api.post('/cart/items', {
+          product_id: product.id,
+          quantity,
+        });
+      } catch {
+        // Le panier local reste valide
       }
     } finally {
       setLoading(false);
@@ -30,20 +55,18 @@ export function useCart() {
   };
 
   /**
-   * Ajouter au panier
+   * Retirer un produit du panier
    */
-  const addToCart = async (productId: number, quantity: number = 1) => {
+  const removeFromCart = async (productId: number) => {
     setLoading(true);
     try {
-      const response = await api.post<ApiResponse<Cart>>('/cart/items', {
-        product_id: productId,
-        quantity,
-      });
-      setCart(response.data.data!);
-      toast.success('Produit ajouté au panier');
-    } catch (error: any) {
-      const message = extractErrorMessage(error);
-      toast.error(message);
+      removeItem(productId);
+
+      try {
+        await api.delete(`/cart/items/${productId}`);
+      } catch {
+        // Silencieux
+      }
     } finally {
       setLoading(false);
     }
@@ -52,33 +75,16 @@ export function useCart() {
   /**
    * Mettre à jour la quantité
    */
-  const updateQuantity = async (itemId: number, quantity: number) => {
+  const changeQuantity = async (productId: number, quantity: number) => {
     setLoading(true);
     try {
-      const response = await api.put<ApiResponse<Cart>>(`/cart/items/${itemId}`, {
-        quantity,
-      });
-      setCart(response.data.data!);
-    } catch (error: any) {
-      const message = extractErrorMessage(error);
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      updateQuantity(productId, quantity);
 
-  /**
-   * Supprimer un item du panier
-   */
-  const removeFromCart = async (itemId: number) => {
-    setLoading(true);
-    try {
-      const response = await api.delete<ApiResponse<Cart>>(`/cart/items/${itemId}`);
-      setCart(response.data.data!);
-      toast.success('Produit retiré du panier');
-    } catch (error: any) {
-      const message = extractErrorMessage(error);
-      toast.error(message);
+      try {
+        await api.put(`/cart/items/${productId}`, { quantity });
+      } catch {
+        // Silencieux
+      }
     } finally {
       setLoading(false);
     }
@@ -90,25 +96,63 @@ export function useCart() {
   const emptyCart = async () => {
     setLoading(true);
     try {
-      await api.delete<ApiResponse<null>>('/cart');
       clearCart();
-      toast.success('Panier vidé');
-    } catch (error: any) {
-      const message = extractErrorMessage(error);
-      toast.error(message);
+
+      try {
+        await api.delete('/cart');
+      } catch {
+        // Silencieux
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Synchroniser avec le backend
+   */
+  const syncCart = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/cart');
+      if (response.data?.data?.items) {
+        clearCart();
+        response.data.data.items.forEach(
+          (item: {
+            product_id: number;
+            product_name: string;
+            price: number;
+            quantity: number;
+            image?: string;
+            stock: number;
+          }) => {
+            addItem({
+              id: item.product_id,
+              name: item.product_name,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image,
+              stock: item.stock,
+            });
+          }
+        );
+      }
+    } catch {
+      // Garde le panier local
     } finally {
       setLoading(false);
     }
   };
 
   return {
-    cart,
-    itemCount,
+    items,
     loading,
-    fetchCart,
+    totalItems: getTotalItems(),
+    totalPrice: getTotalPrice(),
     addToCart,
-    updateQuantity,
     removeFromCart,
+    changeQuantity,
     emptyCart,
+    syncCart,
   };
 }
