@@ -1,3 +1,5 @@
+// src/components/layout/navbar.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -22,7 +24,6 @@ export default function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const getTotalItems = useCartStore((state) => state.getTotalItems);
-
   const totalItems = getTotalItems();
 
   const handleLogout = () => {
@@ -98,29 +99,27 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Authentification */}
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
                 <Link
                   href="/profile"
-                  className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex items-center space-x-1 text-sm font-medium text-gray-600 hover:text-blue-600"
                 >
                   <UserIcon className="h-5 w-5" />
-                  <span className="max-w-[120px] truncate">{user?.name}</span>
+                  <span>{user?.name}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                  title="Déconnexion"
+                  className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-sm font-medium text-gray-600 hover:text-blue-600"
                 >
                   Connexion
                 </Link>
@@ -134,12 +133,9 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Bouton menu mobile */}
-          <div className="md:hidden flex items-center space-x-2">
-            <Link
-              href="/cart"
-              className="relative p-2 text-gray-600"
-            >
+          {/* Bouton mobile */}
+          <div className="md:hidden flex items-center space-x-3">
+            <Link href="/cart" className="relative p-2 text-gray-600">
               <ShoppingCartIcon className="h-6 w-6" />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
@@ -163,8 +159,8 @@ export default function Navbar() {
 
       {/* Menu mobile */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t">
-          <div className="px-4 py-3 space-y-2">
+        <div className="md:hidden bg-white border-t shadow-lg">
+          <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
