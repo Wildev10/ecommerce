@@ -59,4 +59,21 @@ trait ApiResponse
 
         return response()->json($response, $code);
     }
+
+    /**
+     * Réponse JSON de création — 201
+     */
+    protected function created($data = null, string $message = 'Créé avec succès')
+    {
+        return $this->success($data, $message, 201);
+    }
+
+    /**
+     * Réponse JSON de suppression — 200
+
+     */
+    protected function noContent(string $message = 'Supprimé avec succès')
+    {
+        return $this->success(null, $message);
+    }
 }

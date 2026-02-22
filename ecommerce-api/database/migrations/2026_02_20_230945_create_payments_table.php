@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
-            $table->enum('method', ['credit_card', 'paypal', 'bank_transfer', 'cash_on_delivery']);
+            $table->enum('method', ['credit_card', 'paypal', 'bank_transfer', 'cash_on_delivery', 'mobile_money']);
             $table->enum('status', ['pending', 'completed', 'failed', 'refunded'])->default('pending');
             $table->string('transaction_id')->nullable()->unique();
             $table->timestamps();

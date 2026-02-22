@@ -100,4 +100,37 @@ class SellerController extends Controller
 
         return $this->success($order, 'Détail commande vendeur');
     }
+
+    /**
+     * PUT /api/seller/orders/{id}/status — Mettre à jour le statut (vendeur)
+     * Accès : Seller (ses propres commandes)
+     */
+    public function updateOrderStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status'  => 'required|in:confirmed,processing,shipped',
+            'comment' => 'nullable|string|max:500',
+        ]);
+
+        $sellerId = auth()->id();
+
+        $order = Order::whereHas('items', function ($q) use ($sellerId) {
+            $q->whereHas('product', fn ($p) => $p->where('seller_id', $sellerId));
+        })->findOrFail($id);
+
+        $oldStatus = $order->status;
+
+        $order->update(['status' => $request->status]);
+
+        $order->statusHistory()->create([
+            'old_status' => $oldStatus,
+            'new_status' => $request->status,
+            'note'       => $request->comment ?? 'Statut mis à jour par le vendeur',
+            'changed_by' => auth()->id(),
+        ]);
+
+        $order->load(['items', 'statusHistory']);
+
+        return $this->success($order, 'Statut mis à jour');
+    }
 }

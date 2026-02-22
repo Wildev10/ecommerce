@@ -39,17 +39,20 @@ Route::middleware('throttle:10,1')->group(function () {
 // ╚═══════════════════════════════════════════════╝
 // Produits
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/featured', [ProductController::class, 'featured']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 
 // Catégories
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}', [CategoryController::class, 'show']);
+Route::get('/categories/{category}/products', [CategoryController::class, 'products']);
 
 // Avis produits (lecture publique)
 Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
 
 // Recherche globale
 Route::get('/search', [SearchController::class, 'index']);
+Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
 
 // ╔═══════════════════════════════════════════════╗
 // ║         ROUTES PROTÉGÉES (auth:sanctum)       ║
@@ -92,11 +95,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/apply-coupon', [OrderController::class, 'applyCoupon']);
     Route::get('/orders/{id}/history', [OrderController::class, 'history']);
+    Route::post('/orders/{id}/reorder', [OrderController::class, 'reorder']);
 
     // ── Paiement ──
     Route::post('/orders/{orderId}/pay', [PaymentController::class, 'pay']);
     Route::get('/payments', [PaymentController::class, 'myPayments']);
     Route::get('/payments/{id}', [PaymentController::class, 'show']);
+    Route::get('/payments/{orderId}/status', [PaymentController::class, 'status']);
 
     // ── Avis (écriture) ──
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
@@ -112,6 +117,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/seller/dashboard', [SellerController::class, 'dashboard']);
         Route::get('/seller/orders', [SellerController::class, 'orders']);
         Route::get('/seller/orders/{id}', [SellerController::class, 'orderShow']);
+        Route::put('/seller/orders/{id}/status', [SellerController::class, 'updateOrderStatus']);
     });
 
     // ╔═══════════════════════════════════════════════╗
@@ -126,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/{id}', [AdminController::class, 'userShow']);
         Route::put('/users/{id}/role', [AdminController::class, 'updateRole']);
         Route::put('/users/{id}/toggle', [AdminController::class, 'toggleUser']);
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
 
         // Commandes
         Route::get('/orders', [AdminController::class, 'orders']);
@@ -134,8 +141,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Produits (admin)
         Route::get('/products', [AdminController::class, 'products']);
         Route::put('/products/{id}/toggle', [AdminController::class, 'toggleProduct']);
+        Route::delete('/products/{id}', [AdminController::class, 'deleteProduct']);
 
         // Catégories CRUD admin
+        Route::get('/categories', [CategoryController::class, 'adminIndex']);
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::put('/categories/{category}', [CategoryController::class, 'update']);
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);

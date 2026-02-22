@@ -107,4 +107,43 @@ class CategoryController extends Controller
 
         return $this->success(null, 'Catégorie supprimée');
     }
+
+    /**
+     * GET /api/categories/{slug}/products — Produits d'une catégorie
+     * Accès : Public
+     */
+    public function products(Request $request, $slug)
+    {
+        $category = Category::where('slug', $slug)
+            ->orWhere('id', $slug)
+            ->firstOrFail();
+
+        // Inclure les produits des sous-catégories
+        $categoryIds = collect([$category->id]);
+        $childIds = Category::where('parent_id', $category->id)->pluck('id');
+        $categoryIds = $categoryIds->merge($childIds);
+
+        $products = \App\Models\Product::whereIn('category_id', $categoryIds)
+            ->where('is_active', true)
+            ->with(['category', 'seller'])
+            ->latest()
+            ->paginate($request->get('per_page', 12));
+
+        return $this->paginated($products, "Produits de la catégorie {$category->name}");
+    }
+
+    /**
+     * GET /api/admin/categories — Liste de toutes les catégories (admin)
+     * Accès : Admin
+     */
+    public function adminIndex(Request $request)
+    {
+        $categories = Category::withCount('products')
+            ->with('children')
+            ->whereNull('parent_id')
+            ->latest()
+            ->get();
+
+        return $this->success($categories, 'Liste des catégories (admin)');
+    }
 }

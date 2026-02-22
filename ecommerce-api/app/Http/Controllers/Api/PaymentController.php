@@ -147,4 +147,25 @@ class PaymentController extends Controller
             'payment' => $order->payment->fresh(),
         ], 'Remboursement effectué avec succès');
     }
+
+    /**
+     * GET /api/payments/{orderId}/status — Statut du paiement d'une commande
+     * Accès : Authentifié
+     */
+    public function status($orderId)
+    {
+        $order = Order::with('payment')->findOrFail($orderId);
+
+        if ($order->user_id !== auth()->id() && auth()->user()->role !== 'admin') {
+            return $this->error('Non autorisé', 403);
+        }
+
+        return $this->success([
+            'order_id'       => $order->id,
+            'order_number'   => $order->order_number,
+            'payment_status' => $order->payment_status,
+            'payment_method' => $order->payment_method,
+            'payment'        => $order->payment,
+        ], 'Statut du paiement');
+    }
 }

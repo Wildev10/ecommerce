@@ -256,4 +256,21 @@ class ProductController extends Controller
 
         return $this->paginated($products, 'Mes produits');
     }
+
+    /**
+     * GET /api/products/featured — Produits mis en avant
+     * Accès : Public
+     */
+    public function featured(Request $request)
+    {
+        $products = Product::where('is_active', true)
+            ->whereNotNull('compare_price')
+            ->whereColumn('compare_price', '>', 'price')
+            ->with(['category', 'seller'])
+            ->latest()
+            ->take($request->get('limit', 12))
+            ->get();
+
+        return $this->success($products, 'Produits en vedette');
+    }
 }

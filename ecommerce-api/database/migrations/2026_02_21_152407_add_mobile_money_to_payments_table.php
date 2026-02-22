@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Modifier l'enum pour ajouter mobile_money
-        \Illuminate\Support\Facades\DB::statement(
-            "ALTER TABLE payments MODIFY COLUMN method ENUM('credit_card','paypal','bank_transfer','cash_on_delivery','mobile_money') NOT NULL"
-        );
+        // mobile_money is now included in the original create_payments_table migration.
+        // This migration is kept for backwards compatibility with existing databases.
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement(
+                "ALTER TABLE payments MODIFY COLUMN method ENUM('credit_card','paypal','bank_transfer','cash_on_delivery','mobile_money') NOT NULL"
+            );
+        }
     }
 
     /**
@@ -22,8 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \Illuminate\Support\Facades\DB::statement(
-            "ALTER TABLE payments MODIFY COLUMN method ENUM('credit_card','paypal','bank_transfer','cash_on_delivery') NOT NULL"
-        );
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement(
+                "ALTER TABLE payments MODIFY COLUMN method ENUM('credit_card','paypal','bank_transfer','cash_on_delivery') NOT NULL"
+            );
+        }
     }
 };

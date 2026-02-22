@@ -349,4 +349,57 @@ class OrderController extends Controller
 
         return $this->success($order->statusHistory, 'Historique des statuts');
     }
+
+    /**
+     * POST /api/orders/{id}/reorder — Recommander une commande
+     * Accès : Authentifié (propriétaire)
+     */
+    public function reorder(Request $request, $id)
+    {
+        $user = $request->user();
+        $order = Order::where('user_id', $user->id)->with('items')->findOrFail($id);
+
+        $cart = \App\Models\Cart::firstOrCreate(['user_id' => $user->id]);
+
+        $addedItems = [];
+        $skippedItems = [];
+
+        foreach ($order->items as $item) {
+            $product = Product::find($item->product_id);
+
+            if (!$product || !$product->is_active) {
+                $skippedItems[] = $item->product_name . ' (indisponible)';
+                continue;
+            }
+
+            if ($product->stock < 1) {
+                $skippedItems[] = $item->product_name . ' (rupture de stock)';
+                continue;
+            }
+
+            $quantity = min($item->quantity, $product->stock);
+
+            $cartItem = CartItem::where('cart_id', $cart->id)
+                ->where('product_id', $product->id)
+                ->first();
+
+            if ($cartItem) {
+                $newQty = min($cartItem->quantity + $quantity, $product->stock);
+                $cartItem->update(['quantity' => $newQty]);
+            } else {
+                CartItem::create([
+                    'cart_id'    => $cart->id,
+                    'product_id' => $product->id,
+                    'quantity'   => $quantity,
+                ]);
+            }
+
+            $addedItems[] = $item->product_name;
+        }
+
+        return $this->success([
+            'added'   => $addedItems,
+            'skipped' => $skippedItems,
+        ], 'Articles ajoutés au panier');
+    }
 }

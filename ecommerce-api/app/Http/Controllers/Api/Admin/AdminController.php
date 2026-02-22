@@ -251,4 +251,59 @@ class AdminController extends Controller
 
         return $this->success(null, 'Avis supprimé par l\'admin');
     }
+
+    /**
+     * DELETE /api/admin/users/{id} — Supprimer un utilisateur
+     * Accès : Admin
+     */
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === auth()->id()) {
+            return $this->error('Vous ne pouvez pas supprimer votre propre compte', 400);
+        }
+
+        if ($user->orders()->exists()) {
+            return $this->error('Cet utilisateur a des commandes et ne peut pas être supprimé. Désactivez-le à la place.', 409);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return $this->success(null, 'Utilisateur supprimé');
+    }
+
+    /**
+     * DELETE /api/admin/products/{id} — Supprimer un produit (admin)
+     * Accès : Admin
+     */
+    public function deleteProduct($id)
+    {
+        $product = Product::findOrFail($id);
+
+        if ($product->orderItems()->exists()) {
+            return $this->error(
+                'Ce produit est lié à des commandes existantes. Désactivez-le à la place.',
+                409
+            );
+        }
+
+        if ($product->image && !str_starts_with($product->image, 'http')) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image);
+        }
+
+        if ($product->gallery) {
+            foreach ($product->gallery as $img) {
+                if (!str_starts_with($img, 'http')) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($img);
+                }
+            }
+        }
+
+        $product->reviews()->delete();
+        $product->delete();
+
+        return $this->success(null, 'Produit supprimé par l\'admin');
+    }
 }
