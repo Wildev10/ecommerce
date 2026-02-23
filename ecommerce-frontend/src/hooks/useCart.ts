@@ -42,7 +42,7 @@ export function useCart() {
 
       // Sync avec le backend (fire & forget)
       try {
-        await api.post('/cart/items', {
+        await api.post('/cart', {
           product_id: product.id,
           quantity,
         });
@@ -63,7 +63,7 @@ export function useCart() {
       removeItem(productId);
 
       try {
-        await api.delete(`/cart/items/${productId}`);
+        await api.delete(`/cart/${productId}`);
       } catch {
         // Silencieux
       }
@@ -81,7 +81,7 @@ export function useCart() {
       updateQuantity(productId, quantity);
 
       try {
-        await api.put(`/cart/items/${productId}`, { quantity });
+        await api.put(`/cart/${productId}`, { quantity });
       } catch {
         // Silencieux
       }
@@ -119,20 +119,21 @@ export function useCart() {
         clearCart();
         response.data.data.items.forEach(
           (item: {
+            item_id: number;
             product_id: number;
             product_name: string;
-            price: number;
+            product_price: number;
+            product_image: string | null;
             quantity: number;
-            image?: string;
-            stock: number;
+            subtotal: number;
           }) => {
             addItem({
               id: item.product_id,
               name: item.product_name,
-              price: item.price,
+              price: item.product_price,
               quantity: item.quantity,
-              image: item.image,
-              stock: item.stock,
+              image: item.product_image || undefined,
+              stock: 999, // Backend cart doesn't return stock; use safe default
             });
           }
         );

@@ -2,8 +2,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { productsApi, Product } from '@/lib/api';
+import { productsApi } from '@/lib/api';
+import type { Product } from '@/types';
 import { useCartStore } from '@/stores/cart-store';
+import { formatPrice } from '@/lib/api-helpers';
 import Link from 'next/link';
 import {
   ShoppingCartIcon,
@@ -25,8 +27,8 @@ export default function SellerProductsPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await productsApi.getAll();
-      setProducts(data);
+      const res = await productsApi.getMyProducts();
+      setProducts(res.data);
     } catch (error) {
       console.error('Erreur chargement produits:', error);
     } finally {
@@ -135,7 +137,7 @@ export default function SellerProductsPage() {
 
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-xl font-bold text-blue-600">
-                    {product.price.toFixed(2)} €
+                    {formatPrice(product.price)}
                   </span>
                   <span
                     className={`text-xs px-2 py-1 rounded-full ${

@@ -14,12 +14,22 @@ const api = axios.create({
 // ============================================
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = typeof window !== 'undefined'
-      ? localStorage.getItem('auth_token')
-      : null;
+    if (typeof window !== 'undefined') {
+      // Token from Zustand persist (auth-storage key)
+      let token: string | null = null;
+      try {
+        const stored = localStorage.getItem('auth-storage');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          token = parsed?.state?.token || null;
+        }
+      } catch {
+        // fallback
+      }
 
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     // Ne pas forcer Content-Type si multipart (axios le gère)
@@ -39,12 +49,10 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Token invalide/expiré → nettoyage + redirect login
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('cart-storage');
 
-        // Éviter redirect infini si déjà sur /login
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }

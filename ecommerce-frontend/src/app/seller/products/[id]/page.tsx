@@ -3,7 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { productsApi, Product } from '@/lib/api';
+import { productsApi } from '@/lib/api';
+import type { Product } from '@/types';
+import { formatPrice } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
 import Link from 'next/link';
 import {
@@ -48,7 +50,7 @@ export default function ProductDetailPage() {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url || '',
+      image: product.image || '',
       quantity,
       stock: product.stock,
     });
@@ -124,7 +126,7 @@ export default function ProductDetailPage() {
               </p>
 
               <p className="text-4xl font-bold text-blue-600 mb-8">
-                {product.price.toFixed(2)} €
+                {formatPrice(product.price)}
               </p>
             </div>
 

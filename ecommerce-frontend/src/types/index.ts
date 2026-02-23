@@ -140,7 +140,7 @@ export type OrderStatus =
   | 'cancelled'
   | 'refunded';
 
-export type PaymentMethod = 'card' | 'mobile_money' | 'bank_transfer';
+export type PaymentMethod = 'card' | 'mobile_money' | 'cash_on_delivery' | 'bank_transfer' | 'credit_card' | 'paypal';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface OrderItem {
@@ -162,10 +162,11 @@ export interface Order {
   order_number: string;
   status: OrderStatus;
   subtotal: number;
-  shipping: number;
+  shipping_fee: number;
   discount: number;
   total: number;
-  shipping_address: string;
+  payment_method: string;
+  shipping_address: string | null;
   billing_address: string | null;
   notes: string | null;
   coupon_id: number | null;
@@ -175,8 +176,10 @@ export interface Order {
   updated_at: string;
   user?: User;
   items: OrderItem[];
+  address?: Address;
   payment?: Payment;
   coupon?: Coupon | null;
+  status_history?: OrderStatusHistory[];
 }
 
 // ============================================
@@ -231,11 +234,12 @@ export interface Coupon {
   id: number;
   code: string;
   type: CouponType;
-  value: number;
+  discount: number;
   min_amount: number;
   max_uses: number | null;
   used_count: number;
-  expires_at: string;
+  starts_at: string | null;
+  expires_at: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -247,11 +251,47 @@ export interface Coupon {
 export interface SearchResults {
   products: Product[];
   categories: Category[];
+  query: string;
+  counts: {
+    products: number;
+    categories: number;
+  };
 }
 
 export interface SearchSuggestions {
-  products: Product[];
-  categories: Category[];
+  products: Array<{ id: number; name: string; slug: string; price: number; image: string | null }>;
+  categories: Array<{ id: number; name: string; slug: string }>;
+}
+
+// ============================================
+// Address
+// ============================================
+export interface Address {
+  id: number;
+  user_id: number;
+  label: string | null;
+  full_name: string;
+  phone: string;
+  city: string;
+  quarter: string;
+  street_address: string;
+  landmark: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================
+// Order Status History
+// ============================================
+export interface OrderStatusHistory {
+  id: number;
+  order_id: number;
+  old_status: string;
+  new_status: string;
+  note: string | null;
+  changed_by: User | null;
+  created_at: string;
 }
 
 // ============================================
@@ -259,16 +299,13 @@ export interface SearchSuggestions {
 // ============================================
 export interface AdminDashboard {
   total_users: number;
-  total_buyers: number;
-  total_sellers: number;
   total_products: number;
-  active_products: number;
   total_orders: number;
-  pending_orders: number;
   total_revenue: number;
-  monthly_revenue: number;
+  pending_orders: number;
   recent_orders: Order[];
-  recent_users: User[];
+  new_users_today: number;
+  orders_today: number;
 }
 
 export interface SellerDashboard {
@@ -277,8 +314,15 @@ export interface SellerDashboard {
   total_orders: number;
   pending_orders: number;
   total_revenue: number;
-  monthly_revenue: number;
-  recent_orders: Order[];
-  top_products: Product[];
-  low_stock_products: Product[];
+  top_products: Array<{
+    product_id: number;
+    product_name: string;
+    total_sold: number;
+    total_revenue: number;
+  }>;
+  monthly_sales: Array<{
+    month: number;
+    year: number;
+    revenue: number;
+  }>;
 }
