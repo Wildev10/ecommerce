@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, CreditCard, Plus, Loader2, Truck, ShoppingBag } from 'lucide-react';
+import { MapPin, CreditCard, Plus, Loader2, Truck, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { addressApi, ordersApi, cartApi } from '@/lib/api';
 import type { Address } from '@/types';
 import { CartResponse } from '@/lib/api';
@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -45,12 +46,36 @@ export default function CheckoutPage() {
       router.push('/login?redirect=/checkout');
       return;
     }
-    loadData();
+    syncAndLoad();
   }, [isAuthenticated]);
 
-  const loadData = async () => {
+  /**
+   * Sync le panier local vers le backend, puis charge les données
+   */
+  const syncAndLoad = async () => {
     setLoading(true);
+    setSyncing(true);
     try {
+      // 1. Si on a des articles locaux, les pousser vers le backend
+      if (localItems.length > 0) {
+        // Vider le panier backend d'abord pour éviter les doublons
+        try { await cartApi.clear(); } catch { /* ignore */ }
+
+        // Ajouter chaque article local au backend
+        for (const item of localItems) {
+          try {
+            await cartApi.addItem({
+              product_id: item.id,
+              quantity: item.quantity,
+            });
+          } catch {
+            // Si un produit n'est plus disponible, on continue
+          }
+        }
+      }
+      setSyncing(false);
+
+      // 2. Charger les données
       const [addressesData, cartData] = await Promise.all([
         addressApi.getAll(),
         cartApi.get(),
@@ -58,13 +83,13 @@ export default function CheckoutPage() {
       setAddresses(addressesData);
       setCart(cartData);
 
-      // Select default address
+      // Sélectionner l'adresse par défaut
       const defaultAddr = addressesData.find((a) => a.is_default);
       if (defaultAddr) setSelectedAddressId(defaultAddr.id);
       else if (addressesData.length > 0) setSelectedAddressId(addressesData[0].id);
 
-      // If cart is empty but we have local items, redirect back
-      if (!cartData?.items?.length && localItems.length === 0) {
+      // Si le panier est vraiment vide
+      if (!cartData?.items?.length) {
         toast.error('Votre panier est vide');
         router.push('/cart');
       }
@@ -72,6 +97,7 @@ export default function CheckoutPage() {
       toast.error(extractErrorMessage(error));
     } finally {
       setLoading(false);
+      setSyncing(false);
     }
   };
 
@@ -129,9 +155,10 @@ export default function CheckoutPage() {
     }
   };
 
-  if (loading) return <Loading fullPage text="Chargement..." />;
+  if (loading) return <Loading fullPage text={syncing ? "Synchronisation du panier..." : "Chargement..."} />;
 
-  const subtotal = cart?.total || localItems.reduce((t, i) => t + i.price * i.quantity, 0);
+  const cartItems = cart?.items || [];
+  const subtotal = cart?.total || localItems.reduce((t, i) => t + Number(i.price) * i.quantity, 0);
   const shipping = subtotal >= 50000 ? 0 : 2000;
   const discount = couponDiscount?.discount || 0;
   const total = subtotal + shipping - discount;
@@ -255,12 +282,21 @@ export default function CheckoutPage() {
 
           {/* Cart items */}
           <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-            {(cart?.items || []).map((item) => (
-              <div key={item.item_id} className="flex justify-between text-sm">
-                <span className="text-gray-600 truncate flex-1">{item.product_name} × {item.quantity}</span>
-                <span className="font-medium ml-2">{formatPrice(item.subtotal)}</span>
-              </div>
-            ))}
+            {cartItems.length > 0 ? (
+              cartItems.map((item) => (
+                <div key={item.item_id} className="flex justify-between text-sm">
+                  <span className="text-gray-600 truncate flex-1">{item.product_name} × {item.quantity}</span>
+                  <span className="font-medium ml-2">{formatPrice(item.subtotal)}</span>
+                </div>
+              ))
+            ) : (
+              localItems.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm">
+                  <span className="text-gray-600 truncate flex-1">{item.name} × {item.quantity}</span>
+                  <span className="font-medium ml-2">{formatPrice(Number(item.price) * item.quantity)}</span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Coupon */}

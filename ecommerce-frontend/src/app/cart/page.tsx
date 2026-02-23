@@ -53,7 +53,7 @@ export default function CartPage() {
 
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 truncate">{item.name}</h3>
-                <p className="text-blue-600 font-bold">{item.price.toFixed(2)} €</p>
+                <p className="text-blue-600 font-bold">{Number(item.price).toFixed(2)} €</p>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -73,7 +73,7 @@ export default function CartPage() {
               </div>
 
               <p className="font-bold text-gray-900 w-24 text-right">
-                {(item.price * item.quantity).toFixed(2)} €
+                {(Number(item.price) * item.quantity).toFixed(2)} €
               </p>
 
               <button

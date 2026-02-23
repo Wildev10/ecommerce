@@ -27,17 +27,23 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item) =>
         set((state) => {
-          const existing = state.items.find((i) => i.id === item.id);
+          const normalizedItem = {
+            ...item,
+            price: Number(item.price),
+            stock: Number(item.stock),
+            quantity: Number(item.quantity),
+          };
+          const existing = state.items.find((i) => i.id === normalizedItem.id);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.id === item.id
-                  ? { ...i, quantity: Math.min(i.quantity + item.quantity, i.stock) }
+                i.id === normalizedItem.id
+                  ? { ...i, quantity: Math.min(i.quantity + normalizedItem.quantity, i.stock) }
                   : i
               ),
             };
           }
-          return { items: [...state.items, item] };
+          return { items: [...state.items, normalizedItem] };
         }),
 
       removeItem: (id) =>

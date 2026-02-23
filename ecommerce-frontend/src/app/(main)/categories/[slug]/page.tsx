@@ -60,7 +60,7 @@ export default function CategoryPage() {
       name: product.name,
       price: product.price,
       quantity: 1,
-      image: product.image || '',
+      image: product.image_url || '',
       stock: product.stock,
     });
     toast.success('Ajouté au panier');

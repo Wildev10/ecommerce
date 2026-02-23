@@ -38,7 +38,7 @@ export default function ProductDetailPage() {
       setProduct(data);
     } catch (error) {
       console.error('Erreur:', error);
-      router.push('/products');
+      router.push('/seller/products');
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function ProductDetailPage() {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image || '',
+      image: product.image_url || '',
       quantity,
       stock: product.stock,
     });
@@ -70,7 +70,7 @@ export default function ProductDetailPage() {
     return (
       <div className="text-center py-16">
         <p className="text-gray-500 text-lg">Produit non trouvé</p>
-        <Link href="/products" className="text-blue-600 hover:underline mt-4 inline-block">
+        <Link href="/seller/products" className="text-blue-600 hover:underline mt-4 inline-block">
           Retour aux produits
         </Link>
       </div>
