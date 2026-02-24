@@ -2,19 +2,21 @@
 
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
+import { useSyncExternalStore, ReactNode } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 interface HydrationProviderProps {
   children: ReactNode;
 }
 
-export default function HydrationProvider({ children }: HydrationProviderProps) {
-  const [isHydrated, setIsHydrated] = useState(false);
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+export default function HydrationProvider({ children }: HydrationProviderProps) {
+  const isHydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   if (!isHydrated) {
     return (

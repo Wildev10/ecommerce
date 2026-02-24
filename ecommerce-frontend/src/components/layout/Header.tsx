@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ShoppingCart,
-  User,
   LogOut,
   Menu,
   X,
@@ -111,9 +110,15 @@ export default function Header() {
                   <span>Déconnexion</span>
                 </button>
 
-                <span className="text-sm text-gray-500">
-                  {user.name}
-                </span>
+                <Link
+                  href="/profile"
+                  className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+                >
+                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 hidden lg:inline">{user.name}</span>
+                </Link>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
@@ -187,6 +192,16 @@ export default function Header() {
                   </Link>
                 )}
                 <Link
+                  href="/profile"
+                  className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span>{user.name}</span>
+                </Link>
+                <Link
                   href="/orders"
                   className="block px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
                   onClick={() => setMobileMenuOpen(false)}
@@ -197,7 +212,7 @@ export default function Header() {
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
                 >
-                  Déconnexion ({user.name})
+                  Déconnexion
                 </button>
               </>
             ) : (

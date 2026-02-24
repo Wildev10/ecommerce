@@ -3,7 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { productsApi, Product } from '@/lib/api';
+import { productsApi } from '@/lib/api';
+import type { Product } from '@/types';
+import { formatPrice } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
 import Link from 'next/link';
 import {
@@ -36,7 +38,7 @@ export default function ProductDetailPage() {
       setProduct(data);
     } catch (error) {
       console.error('Erreur:', error);
-      router.push('/products');
+      router.push('/seller/products');
     } finally {
       setLoading(false);
     }
@@ -68,7 +70,7 @@ export default function ProductDetailPage() {
     return (
       <div className="text-center py-16">
         <p className="text-gray-500 text-lg">Produit non trouvé</p>
-        <Link href="/products" className="text-blue-600 hover:underline mt-4 inline-block">
+        <Link href="/seller/products" className="text-blue-600 hover:underline mt-4 inline-block">
           Retour aux produits
         </Link>
       </div>
@@ -124,7 +126,7 @@ export default function ProductDetailPage() {
               </p>
 
               <p className="text-4xl font-bold text-blue-600 mb-8">
-                {product.price.toFixed(2)} €
+                {formatPrice(product.price)}
               </p>
             </div>
 

@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
 import { extractErrorMessage } from '@/lib/api-helpers';
 import { ApiResponse, User } from '@/types';
+import { AxiosError } from 'axios';
 import toast from 'react-hot-toast';
 
 interface RegisterData {
@@ -60,17 +61,13 @@ export function useAuth() {
       setAuth(user, token);
       toast.success('Inscription réussie !');
 
-      // Redirection selon le rôle
-      if (user.role === 'seller') {
-        router.push('/seller/dashboard');
-      } else {
-        router.push('/');
-      }
-    } catch (error: any) {
+      // Redirection vers la page de connexion après inscription
+      router.push('/login');
+    } catch (error: unknown) {
       const message = extractErrorMessage(error);
       toast.error(message);
 
-      if (error.response?.status === 422) {
+      if (error instanceof AxiosError && error.response?.status === 422) {
         setErrors(error.response.data.errors || {});
       }
     } finally {
@@ -98,7 +95,7 @@ export function useAuth() {
       // Redirection selon le rôle
       switch (user.role) {
         case 'admin':
-          router.push('/admin/dashboard');
+          router.push('/dashboard');
           break;
         case 'seller':
           router.push('/seller/dashboard');
@@ -106,11 +103,11 @@ export function useAuth() {
         default:
           router.push('/');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = extractErrorMessage(error);
       toast.error(message);
 
-      if (error.response?.status === 422) {
+      if (error instanceof AxiosError && error.response?.status === 422) {
         setErrors(error.response.data.errors || {});
       }
     } finally {
@@ -139,9 +136,10 @@ export function useAuth() {
    */
   const fetchUser = async () => {
     try {
-      const response = await api.get<ApiResponse<User>>('/user');
-      setUser(response.data.data!);
-      return response.data.data!;
+      const response = await api.get<ApiResponse<{ user: User }>>('/user');
+      const user = response.data.data!.user;
+      setUser(user);
+      return user;
     } catch {
       logoutStore();
       return null;
@@ -156,14 +154,14 @@ export function useAuth() {
     setErrors({});
 
     try {
-      const response = await api.post<ApiResponse<null>>('/forgot-password', data);
+      const response = await api.post<ApiResponse<null>>('/auth/forgot-password', data);
       toast.success(response.data.message);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = extractErrorMessage(error);
       toast.error(message);
 
-      if (error.response?.status === 422) {
+      if (error instanceof AxiosError && error.response?.status === 422) {
         setErrors(error.response.data.errors || {});
       }
       return false;
@@ -180,15 +178,15 @@ export function useAuth() {
     setErrors({});
 
     try {
-      const response = await api.post<ApiResponse<null>>('/reset-password', data);
+      const response = await api.post<ApiResponse<null>>('/auth/reset-password', data);
       toast.success(response.data.message);
       router.push('/login');
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = extractErrorMessage(error);
       toast.error(message);
 
-      if (error.response?.status === 422) {
+      if (error instanceof AxiosError && error.response?.status === 422) {
         setErrors(error.response.data.errors || {});
       }
       return false;

@@ -22,7 +22,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated) {
       if (user?.role === 'admin') {
-        router.push('/admin');
+        router.push('/dashboard');
       } else {
         router.push('/');
       }
@@ -149,14 +149,6 @@ export default function LoginPage() {
           </p>
         </form>
 
-        {/* Compte démo */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm font-medium text-yellow-800 mb-2">Comptes de test :</p>
-          <div className="text-xs text-yellow-700 space-y-1">
-            <p><strong>Admin :</strong> admin@admin.com / password</p>
-            <p><strong>Client :</strong> client@test.com / password</p>
-          </div>
-        </div>
       </div>
     </div>
   );
