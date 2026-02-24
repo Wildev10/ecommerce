@@ -61,12 +61,8 @@ export function useAuth() {
       setAuth(user, token);
       toast.success('Inscription réussie !');
 
-      // Redirection selon le rôle
-      if (user.role === 'seller') {
-        router.push('/seller/dashboard');
-      } else {
-        router.push('/');
-      }
+      // Redirection vers la page de connexion après inscription
+      router.push('/login');
     } catch (error: unknown) {
       const message = extractErrorMessage(error);
       toast.error(message);
@@ -99,7 +95,7 @@ export function useAuth() {
       // Redirection selon le rôle
       switch (user.role) {
         case 'admin':
-          router.push('/admin/dashboard');
+          router.push('/dashboard');
           break;
         case 'seller':
           router.push('/seller/dashboard');
