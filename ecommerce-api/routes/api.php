@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\DeliveryController;
 
 // ╔═══════════════════════════════════════════════╗
 // ║         SANTÉ & MONITORING                    ║
@@ -118,6 +119,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/seller/orders', [SellerController::class, 'orders']);
         Route::get('/seller/orders/{id}', [SellerController::class, 'orderShow']);
         Route::put('/seller/orders/{id}/status', [SellerController::class, 'updateOrderStatus']);
+    });
+
+    // ╔═══════════════════════════════════════════════╗
+    // ║         LIVREUR (DELIVERY)                    ║
+    // ╚═══════════════════════════════════════════════╝
+    Route::middleware('delivery')->prefix('delivery')->group(function () {
+        Route::get('/dashboard', [DeliveryController::class, 'dashboard']);
+        Route::get('/orders', [DeliveryController::class, 'orders']);
+        Route::put('/orders/{id}/status', [DeliveryController::class, 'updateOrderStatus']);
+        Route::get('/history', [DeliveryController::class, 'history']);
     });
 
     // ╔═══════════════════════════════════════════════╗

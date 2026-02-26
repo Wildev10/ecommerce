@@ -33,7 +33,7 @@ export interface PaginatedResponse<T> {
 // ============================================
 // User
 // ============================================
-export type UserRole = 'buyer' | 'seller' | 'admin';
+export type UserRole = 'buyer' | 'seller' | 'admin' | 'delivery';
 
 export interface User {
   id: number;
@@ -140,8 +140,8 @@ export type OrderStatus =
   | 'cancelled'
   | 'refunded';
 
-export type PaymentMethod = 'card' | 'mobile_money' | 'cash_on_delivery' | 'bank_transfer' | 'credit_card' | 'paypal';
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type PaymentMethod = 'card' | 'mobile_money' | 'cash_on_delivery' | 'bank_transfer' | 'credit_card' | 'paypal' | 'mtn_momo' | 'moov_money';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'completed';
 
 export interface OrderItem {
   id: number;
@@ -161,15 +161,19 @@ export interface Order {
   user_id: number;
   order_number: string;
   status: OrderStatus;
+  payment_status: string;
   subtotal: number;
   shipping_fee: number;
   discount: number;
   total: number;
   payment_method: string;
+  transaction_id: string | null;
   shipping_address: string | null;
   billing_address: string | null;
   notes: string | null;
   coupon_id: number | null;
+  address_id: number | null;
+  delivery_person_id: number | null;
   cancelled_at: string | null;
   cancel_reason: string | null;
   created_at: string;
@@ -180,6 +184,7 @@ export interface Order {
   payment?: Payment;
   coupon?: Coupon | null;
   status_history?: OrderStatusHistory[];
+  delivery_person?: User;
 }
 
 // ============================================
@@ -189,13 +194,16 @@ export interface Payment {
   id: number;
   order_id: number;
   payment_method: PaymentMethod;
+  method: string;
   amount: number;
   status: PaymentStatus;
   transaction_id: string;
+  phone_number?: string;
   paid_at: string | null;
   created_at: string;
   updated_at: string;
   order?: Order;
+  user?: User;
 }
 
 // ============================================
@@ -325,4 +333,17 @@ export interface SellerDashboard {
     year: number;
     revenue: number;
   }>;
+}
+
+// ============================================
+// Delivery Dashboard Types
+// ============================================
+export type DeliveryStatus = 'assigned' | 'picked_up' | 'delivering' | 'delivered';
+
+export interface DeliveryDashboard {
+  total_deliveries: number;
+  completed_deliveries: number;
+  in_progress_deliveries: number;
+  pending_deliveries: number;
+  recent_deliveries: Order[];
 }

@@ -21,10 +21,18 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      if (user?.role === 'admin') {
-        router.push('/dashboard');
-      } else {
-        router.push('/');
+      switch (user?.role) {
+        case 'admin':
+          router.push('/dashboard');
+          break;
+        case 'seller':
+          router.push('/seller');
+          break;
+        case 'delivery':
+          router.push('/delivery');
+          break;
+        default:
+          router.push('/');
       }
     }
   }, [isAuthenticated, user, router]);

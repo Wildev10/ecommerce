@@ -26,6 +26,7 @@ import {
   Camera,
   Store,
   ShoppingBag,
+  Truck,
   Loader2,
 } from 'lucide-react';
 
@@ -186,6 +187,7 @@ export default function ProfilePage() {
     admin: { label: 'Administrateur', color: 'bg-red-100 text-red-700 border-red-200', icon: Shield },
     seller: { label: 'Vendeur', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Store },
     buyer: { label: 'Client', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: ShoppingBag },
+    delivery: { label: 'Livreur', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Truck },
   };
   const role = roleConfig[user.role] || roleConfig.buyer;
   const RoleIcon = role.icon;

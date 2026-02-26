@@ -51,8 +51,17 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isDelivery(): bool
+    {
+        return $this->role === 'delivery';
+    }
 
-        public function products()
+    public function deliveryOrders()
+    {
+        return $this->hasMany(Order::class, 'delivery_person_id');
+    }
+
+    public function products()
     {
         return $this->hasMany(Product::class, 'seller_id');
     }

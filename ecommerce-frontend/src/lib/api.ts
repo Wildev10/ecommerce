@@ -8,6 +8,7 @@ import type {
   User,
   AuthResponse,
   AdminDashboard,
+  SellerDashboard,
   Review,
   WishlistItem,
   Coupon,
@@ -306,7 +307,7 @@ export const ordersApi = {
 // Payment API
 // ============================================
 export const paymentApi = {
-  pay: async (orderId: number, data: { payment_method: string }) => {
+  pay: async (orderId: number, data: { payment_method: string; phone_number?: string; amount?: number }) => {
     const res = await axios.post<ApiResponse<Payment>>(`/orders/${orderId}/pay`, data);
     return res.data;
   },
@@ -439,7 +440,7 @@ export const adminApi = {
     await axios.delete(`/admin/users/${id}`);
   },
 
-  getOrders: async (params?: { per_page?: number; page?: number }) => {
+  getOrders: async (params?: { per_page?: number; page?: number; status?: string }) => {
     const res = await axios.get<PaginatedResponse<Order>>('/admin/orders', { params });
     return res.data;
   },
@@ -526,11 +527,11 @@ export const adminApi = {
 // ============================================
 export const sellerApi = {
   getDashboard: async () => {
-    const res = await axios.get('/seller/dashboard');
+    const res = await axios.get<ApiResponse<SellerDashboard>>('/seller/dashboard');
     return res.data.data;
   },
 
-  getOrders: async (params?: { per_page?: number; page?: number }) => {
+  getOrders: async (params?: { per_page?: number; page?: number; status?: string }) => {
     const res = await axios.get<PaginatedResponse<Order>>('/seller/orders', { params });
     return res.data;
   },
@@ -542,6 +543,37 @@ export const sellerApi = {
 
   updateOrderStatus: async (id: number, data: { status: string; comment?: string }) => {
     const res = await axios.put(`/seller/orders/${id}/status`, data);
+    return res.data;
+  },
+};
+
+// ============================================
+// Delivery API
+// ============================================
+export const deliveryApi = {
+  getDashboard: async () => {
+    const res = await axios.get<ApiResponse<{
+      assigned_orders: number;
+      delivered_orders: number;
+      in_progress_orders: number;
+      total_deliveries: number;
+      recent_orders: Order[];
+    }>>('/delivery/dashboard');
+    return res.data.data;
+  },
+
+  getOrders: async (params?: { per_page?: number; page?: number; status?: string }) => {
+    const res = await axios.get<PaginatedResponse<Order>>('/delivery/orders', { params });
+    return res.data;
+  },
+
+  updateOrderStatus: async (id: number, data: { status: string; comment?: string }) => {
+    const res = await axios.put(`/delivery/orders/${id}/status`, data);
+    return res.data;
+  },
+
+  getHistory: async (params?: { per_page?: number; page?: number }) => {
+    const res = await axios.get<PaginatedResponse<Order>>('/delivery/history', { params });
     return res.data;
   },
 };

@@ -13,6 +13,7 @@ class Payment extends Model
         'method',
         'status',
         'transaction_id',
+        'phone_number',
     ];
 
     public function order()

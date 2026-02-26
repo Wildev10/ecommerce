@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Menu, X, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Menu, X, ChevronLeft, Archive } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/protected-route';
 import { useAuthStore } from '@/stores/auth-store';
 
 const NAV_ITEMS = [
-  { href: '/seller/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/seller', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/seller/products', label: 'Mes produits', icon: Package },
   { href: '/seller/orders', label: 'Commandes', icon: ShoppingCart },
+  { href: '/seller/stock', label: 'Gestion stock', icon: Archive },
 ];
 
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={['seller', 'admin']}>
       <div className="min-h-screen bg-gray-100 flex">
         {sidebarOpen && (
           <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -32,7 +33,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
           </div>
           <nav className="p-4 space-y-1">
             {NAV_ITEMS.map((item) => {
-              const isActive = pathname.startsWith(item.href);
+              const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
               const Icon = item.icon;
               return (
                 <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}

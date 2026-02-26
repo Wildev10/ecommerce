@@ -13,6 +13,7 @@ class Order extends Model
         'user_id',
         'address_id',
         'coupon_id',
+        'delivery_person_id',
         'order_number',
         'status',
         'payment_status',
@@ -72,6 +73,11 @@ class Order extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
+    }
+
+    public function deliveryPerson()
+    {
+        return $this->belongsTo(User::class, 'delivery_person_id');
     }
 
     public static function generateOrderNumber()

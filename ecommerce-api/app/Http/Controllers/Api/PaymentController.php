@@ -31,7 +31,8 @@ class PaymentController extends Controller
         }
 
         $request->validate([
-            'payment_method' => 'required|in:credit_card,paypal,bank_transfer,cash_on_delivery,mobile_money',
+            'payment_method' => 'required|in:credit_card,paypal,bank_transfer,cash_on_delivery,mobile_money,mtn_momo,moov_money',
+            'phone_number' => 'nullable|string|max:20',
         ]);
 
         $payment = Payment::create([
@@ -41,6 +42,7 @@ class PaymentController extends Controller
             'method'         => $request->payment_method,
             'status'         => 'completed',
             'transaction_id' => 'TXN-' . strtoupper(uniqid()),
+            'phone_number'   => $request->phone_number,
         ]);
 
         $order->update([

@@ -108,7 +108,7 @@ class AdminController extends Controller
      */
     public function orders(Request $request)
     {
-        $query = Order::with(['user', 'items', 'address']);
+        $query = Order::with(['user', 'items', 'address', 'deliveryPerson']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -126,7 +126,7 @@ class AdminController extends Controller
     public function updateOrderStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,confirmed,processing,shipped,delivering,delivered,cancelled',
         ]);
 
         $order = Order::findOrFail($id);

@@ -98,7 +98,10 @@ export function useAuth() {
           router.push('/dashboard');
           break;
         case 'seller':
-          router.push('/seller/dashboard');
+          router.push('/seller');
+          break;
+        case 'delivery':
+          router.push('/delivery');
           break;
         default:
           router.push('/');
