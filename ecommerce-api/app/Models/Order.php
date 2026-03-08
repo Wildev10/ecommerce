@@ -44,6 +44,7 @@ class Order extends Model
     const PAYMENT_PAID = 'paid';
     const PAYMENT_FAILED = 'failed';
     const PAYMENT_REFUNDED = 'refunded';
+    const STATUS_DELIVERING = 'delivering';
 
     public function user()
     {

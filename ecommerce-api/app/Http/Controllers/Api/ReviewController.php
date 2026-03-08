@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Models\ReviewReply;
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -19,7 +21,7 @@ class ReviewController extends Controller
     public function index(Product $product)
     {
         $reviews = $product->reviews()
-            ->with('user:id,name,avatar')
+            ->with(['user:id,name,avatar', 'reply.user:id,name'])
             ->latest()
             ->paginate(10);
 
@@ -34,6 +36,17 @@ class ReviewController extends Controller
     {
         if (!$request->user()->isBuyer()) {
             return $this->error('Seuls les acheteurs peuvent laisser un avis.', 403);
+        }
+
+        // Vérifier que l'acheteur a bien commandé ce produit (commande livrée)
+        $hasPurchased = OrderItem::where('product_id', $product->id)
+            ->whereHas('order', function ($q) use ($request) {
+                $q->where('user_id', $request->user()->id)
+                  ->where('status', 'delivered');
+            })->exists();
+
+        if (!$hasPurchased) {
+            return $this->error('Vous devez avoir acheté et reçu ce produit pour laisser un avis.', 403);
         }
 
         $existingReview = Review::where('user_id', $request->user()->id)
@@ -56,7 +69,7 @@ class ReviewController extends Controller
             'comment'    => $request->comment,
         ]);
 
-        $review->load('user:id,name,avatar');
+        $review->load(['user:id,name,avatar']);
 
         return $this->success($review, 'Avis ajouté avec succès.', 201);
     }
@@ -99,5 +112,37 @@ class ReviewController extends Controller
         $review->delete();
 
         return $this->success(null, 'Avis supprimé avec succès.');
+    }
+
+    /**
+     * POST /api/reviews/{review}/reply — Répondre à un avis
+     * Accès : Vendeur propriétaire du produit
+     */
+    public function reply(Request $request, Review $review)
+    {
+        $user = $request->user();
+
+        // Seul le vendeur propriétaire du produit peut répondre
+        if (!$user->isSeller() || $review->product->user_id !== $user->id) {
+            return $this->error('Seul le vendeur de ce produit peut répondre.', 403);
+        }
+
+        if ($review->reply) {
+            return $this->error('Cet avis a déjà une réponse.', 409);
+        }
+
+        $request->validate([
+            'content' => 'required|string|max:1000',
+        ]);
+
+        $reply = ReviewReply::create([
+            'review_id' => $review->id,
+            'user_id'   => $user->id,
+            'content'   => $request->content,
+        ]);
+
+        $reply->load('user:id,name');
+
+        return $this->success($reply, 'Réponse ajoutée avec succès.', 201);
     }
 }

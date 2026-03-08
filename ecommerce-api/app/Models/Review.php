@@ -25,4 +25,9 @@ class Review extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function reply()
+    {
+        return $this->hasOne(ReviewReply::class);
+    }
 }

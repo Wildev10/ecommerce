@@ -7,6 +7,7 @@ use App\Http\Requests\PhoneRequest;
 use App\Models\Payment;
 use App\Models\Order;
 use App\Services\PhoneValidationService;
+use App\Services\CommissionService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -56,6 +57,10 @@ class PaymentController extends Controller
             'payment_status' => 'paid',
             'transaction_id' => $payment->transaction_id,
         ]);
+
+        // Record commissions for each seller
+        $order->load('items.product');
+        app(CommissionService::class)->recordForOrder($order);
 
         $payment->load(['user', 'order']);
         Mail::to(auth()->user())->send(new PaymentConfirmationMail($payment));

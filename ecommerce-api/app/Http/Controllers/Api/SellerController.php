@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Commission;
+use App\Models\ShippingZone;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +61,9 @@ class SellerController extends Controller
             'total_orders'    => $totalOrders,
             'pending_orders'  => $pendingOrders,
             'total_revenue'   => round($totalRevenue, 2),
+            'total_commission'=> round(Commission::where('seller_id', $sellerId)->sum('commission_amount'), 2),
+            'net_revenue'     => round(Commission::where('seller_id', $sellerId)->sum('seller_amount'), 2),
+            'wallet_balance'  => round(auth()->user()->getOrCreateWallet()->balance, 2),
             'top_products'    => $topProducts,
             'monthly_sales'   => $monthlySales,
         ], 'Dashboard vendeur');
@@ -132,5 +137,98 @@ class SellerController extends Controller
         $order->load(['items', 'statusHistory']);
 
         return $this->success($order, 'Statut mis à jour');
+    }
+
+    /**
+     * PUT /api/seller/orders/{id}/tracking — Ajouter un numéro de suivi
+     */
+    public function updateTracking(Request $request, $id)
+    {
+        $request->validate([
+            'tracking_number'    => 'required|string|max:100',
+            'estimated_delivery' => 'nullable|date|after:today',
+        ]);
+
+        $sellerId = auth()->id();
+
+        $order = Order::whereHas('items', function ($q) use ($sellerId) {
+            $q->whereHas('product', fn ($p) => $p->where('seller_id', $sellerId));
+        })->findOrFail($id);
+
+        $order->update([
+            'tracking_number'    => $request->tracking_number,
+            'estimated_delivery' => $request->estimated_delivery,
+        ]);
+
+        return $this->success($order, 'Numéro de suivi ajouté');
+    }
+
+    // ══════════════════════════════════════
+    //  SHIPPING ZONES
+    // ══════════════════════════════════════
+
+    /**
+     * GET /api/seller/shipping-zones — Mes zones de livraison
+     */
+    public function shippingZones()
+    {
+        $zones = ShippingZone::where('seller_id', auth()->id())
+            ->orderBy('name')
+            ->get();
+
+        return $this->success($zones, 'Zones de livraison');
+    }
+
+    /**
+     * POST /api/seller/shipping-zones — Créer une zone
+     */
+    public function storeShippingZone(Request $request)
+    {
+        $request->validate([
+            'name'           => 'required|string|max:255',
+            'price'          => 'required|numeric|min:0',
+            'estimated_days' => 'required|integer|min:1',
+            'is_active'      => 'boolean',
+        ]);
+
+        $zone = ShippingZone::create([
+            'seller_id'      => auth()->id(),
+            'name'           => $request->name,
+            'price'          => $request->price,
+            'estimated_days' => $request->estimated_days,
+            'is_active'      => $request->get('is_active', true),
+        ]);
+
+        return $this->success($zone, 'Zone de livraison créée', 201);
+    }
+
+    /**
+     * PUT /api/seller/shipping-zones/{id} — Modifier une zone
+     */
+    public function updateShippingZone(Request $request, $id)
+    {
+        $zone = ShippingZone::where('seller_id', auth()->id())->findOrFail($id);
+
+        $request->validate([
+            'name'           => 'sometimes|string|max:255',
+            'price'          => 'sometimes|numeric|min:0',
+            'estimated_days' => 'sometimes|integer|min:1',
+            'is_active'      => 'boolean',
+        ]);
+
+        $zone->update($request->only(['name', 'price', 'estimated_days', 'is_active']));
+
+        return $this->success($zone, 'Zone de livraison mise à jour');
+    }
+
+    /**
+     * DELETE /api/seller/shipping-zones/{id} — Supprimer une zone
+     */
+    public function destroyShippingZone($id)
+    {
+        $zone = ShippingZone::where('seller_id', auth()->id())->findOrFail($id);
+        $zone->delete();
+
+        return $this->success(null, 'Zone de livraison supprimée');
     }
 }

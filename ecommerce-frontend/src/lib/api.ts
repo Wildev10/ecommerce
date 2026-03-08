@@ -17,6 +17,16 @@ import type {
   SearchSuggestions,
   Address,
   OrderStatusHistory,
+  Shop,
+  Commission,
+  Dispute,
+  DisputeMessage,
+  Conversation,
+  Message,
+  Wallet,
+  Withdrawal,
+  ReviewReply,
+  ShippingZone,
 } from '@/types';
 
 // ============================================
@@ -352,6 +362,11 @@ export const reviewsApi = {
   delete: async (reviewId: number) => {
     await axios.delete(`/reviews/${reviewId}`);
   },
+
+  reply: async (reviewId: number, content: string) => {
+    const res = await axios.post<ApiResponse<ReviewReply>>(`/reviews/${reviewId}/reply`, { content });
+    return res.data;
+  },
 };
 
 // ============================================
@@ -520,6 +535,75 @@ export const adminApi = {
   deleteReview: async (id: number) => {
     await axios.delete(`/admin/reviews/${id}`);
   },
+
+  // Sellers management
+  getSellers: async (params?: { per_page?: number; page?: number; seller_status?: string }) => {
+    const res = await axios.get<PaginatedResponse<User & { shop?: Shop }>>('/admin/sellers', { params });
+    return res.data;
+  },
+
+  approveSeller: async (id: number) => {
+    const res = await axios.put(`/admin/sellers/${id}/approve`);
+    return res.data;
+  },
+
+  rejectSeller: async (id: number) => {
+    const res = await axios.put(`/admin/sellers/${id}/reject`);
+    return res.data;
+  },
+
+  banSeller: async (id: number) => {
+    const res = await axios.put(`/admin/sellers/${id}/ban`);
+    return res.data;
+  },
+
+  // Commissions
+  getCommissions: async (params?: { per_page?: number; page?: number; seller_id?: number; status?: string; date_from?: string; date_to?: string }) => {
+    const res = await axios.get<PaginatedResponse<Commission>>('/admin/commissions', { params });
+    return res.data;
+  },
+
+  getCommissionStats: async (period?: string) => {
+    const res = await axios.get<ApiResponse<{ total: number; pending: number; paid: number; period_total: number; rate: number }>>('/admin/commissions/stats', { params: { period } });
+    return res.data.data;
+  },
+
+  updateCommissionRate: async (rate: number) => {
+    const res = await axios.put('/admin/settings/commission-rate', { rate });
+    return res.data;
+  },
+
+  // Disputes (admin)
+  getDisputes: async (params?: { per_page?: number; page?: number; status?: string }) => {
+    const res = await axios.get<PaginatedResponse<Dispute>>('/admin/disputes', { params });
+    return res.data;
+  },
+
+  getDispute: async (id: number) => {
+    const res = await axios.get<ApiResponse<Dispute>>(`/admin/disputes/${id}`);
+    return res.data.data;
+  },
+
+  addDisputeMessage: async (disputeId: number, message: string) => {
+    const res = await axios.post(`/admin/disputes/${disputeId}/messages`, { message });
+    return res.data;
+  },
+
+  updateDisputeStatus: async (disputeId: number, data: { status: string; resolution?: string }) => {
+    const res = await axios.put(`/admin/disputes/${disputeId}/status`, data);
+    return res.data;
+  },
+
+  // Withdrawals (admin)
+  getWithdrawals: async (params?: { per_page?: number; page?: number; status?: string }) => {
+    const res = await axios.get<PaginatedResponse<Withdrawal>>('/admin/withdrawals', { params });
+    return res.data;
+  },
+
+  processWithdrawal: async (id: number, data: { action: 'complete' | 'reject'; transaction_id?: string }) => {
+    const res = await axios.put(`/admin/withdrawals/${id}/process`, data);
+    return res.data;
+  },
 };
 
 // ============================================
@@ -544,6 +628,60 @@ export const sellerApi = {
   updateOrderStatus: async (id: number, data: { status: string; comment?: string }) => {
     const res = await axios.put(`/seller/orders/${id}/status`, data);
     return res.data;
+  },
+
+  updateTracking: async (id: number, data: { tracking_number: string; estimated_delivery?: string }) => {
+    const res = await axios.put(`/seller/orders/${id}/tracking`, data);
+    return res.data;
+  },
+
+  // Shop
+  getMyShop: async () => {
+    const res = await axios.get<ApiResponse<Shop>>('/seller/shop');
+    return res.data.data;
+  },
+
+  upsertShop: async (data: FormData) => {
+    const res = await axios.post<ApiResponse<Shop>>('/seller/shop', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.data;
+  },
+
+  // Wallet
+  getWallet: async () => {
+    const res = await axios.get<ApiResponse<Wallet>>('/seller/wallet');
+    return res.data.data;
+  },
+
+  getWithdrawals: async (params?: { per_page?: number; page?: number }) => {
+    const res = await axios.get<PaginatedResponse<Withdrawal>>('/seller/withdrawals', { params });
+    return res.data;
+  },
+
+  requestWithdrawal: async (data: { amount: number; method: string; phone_number: string }) => {
+    const res = await axios.post<ApiResponse<Withdrawal>>('/seller/withdrawals', data);
+    return res.data;
+  },
+
+  // Shipping Zones
+  getShippingZones: async () => {
+    const res = await axios.get<ApiResponse<ShippingZone[]>>('/seller/shipping-zones');
+    return res.data.data;
+  },
+
+  createShippingZone: async (data: { name: string; price: number; estimated_days: number; is_active?: boolean }) => {
+    const res = await axios.post<ApiResponse<ShippingZone>>('/seller/shipping-zones', data);
+    return res.data.data;
+  },
+
+  updateShippingZone: async (id: number, data: Partial<ShippingZone>) => {
+    const res = await axios.put<ApiResponse<ShippingZone>>(`/seller/shipping-zones/${id}`, data);
+    return res.data.data;
+  },
+
+  deleteShippingZone: async (id: number) => {
+    await axios.delete(`/seller/shipping-zones/${id}`);
   },
 };
 
@@ -574,6 +712,66 @@ export const deliveryApi = {
 
   getHistory: async (params?: { per_page?: number; page?: number }) => {
     const res = await axios.get<PaginatedResponse<Order>>('/delivery/history', { params });
+    return res.data;
+  },
+};
+
+// ============================================
+// Shop API (public)
+// ============================================
+export const shopApi = {
+  getBySlug: async (slug: string) => {
+    const res = await axios.get<ApiResponse<Shop & { products: Product[] }>>(`/shops/${slug}`);
+    return res.data.data;
+  },
+};
+
+// ============================================
+// Disputes API (buyer)
+// ============================================
+export const disputeApi = {
+  getAll: async (params?: { per_page?: number; page?: number }) => {
+    const res = await axios.get<PaginatedResponse<Dispute>>('/disputes', { params });
+    return res.data;
+  },
+
+  create: async (data: { order_id: number; subject: string; description: string }) => {
+    const res = await axios.post<ApiResponse<Dispute>>('/disputes', data);
+    return res.data;
+  },
+
+  getById: async (id: number) => {
+    const res = await axios.get<ApiResponse<Dispute>>(`/disputes/${id}`);
+    return res.data.data;
+  },
+
+  addMessage: async (disputeId: number, message: string) => {
+    const res = await axios.post(`/disputes/${disputeId}/messages`, { message });
+    return res.data;
+  },
+};
+
+// ============================================
+// Conversations API
+// ============================================
+export const conversationApi = {
+  getAll: async (params?: { per_page?: number; page?: number }) => {
+    const res = await axios.get<PaginatedResponse<Conversation>>('/conversations', { params });
+    return res.data;
+  },
+
+  create: async (data: { seller_id: number; product_id?: number }) => {
+    const res = await axios.post<ApiResponse<Conversation>>('/conversations', data);
+    return res.data;
+  },
+
+  getById: async (id: number) => {
+    const res = await axios.get<ApiResponse<Conversation & { messages: Message[] }>>(`/conversations/${id}`);
+    return res.data.data;
+  },
+
+  sendMessage: async (conversationId: number, content: string) => {
+    const res = await axios.post<ApiResponse<Message>>(`/conversations/${conversationId}/messages`, { content });
     return res.data;
   },
 };

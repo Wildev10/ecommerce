@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingCart, Menu, X, ChevronLeft, Archive } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Menu, X, ChevronLeft, Archive, Store, Wallet, Truck, MessageCircle } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/protected-route';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -11,6 +11,10 @@ const NAV_ITEMS = [
   { href: '/seller', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/seller/products', label: 'Mes produits', icon: Package },
   { href: '/seller/orders', label: 'Commandes', icon: ShoppingCart },
+  { href: '/seller/shop', label: 'Ma boutique', icon: Store },
+  { href: '/seller/wallet', label: 'Portefeuille', icon: Wallet },
+  { href: '/seller/shipping', label: 'Livraison', icon: Truck },
+  { href: '/seller/messages', label: 'Messages', icon: MessageCircle },
   { href: '/seller/stock', label: 'Gestion stock', icon: Archive },
 ];
 
@@ -63,7 +67,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
           <header className="h-16 bg-white shadow-sm flex items-center px-6 lg:px-8">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden mr-4"><Menu className="h-6 w-6 text-gray-600" /></button>
             <h2 className="text-lg font-semibold text-gray-900">
-              {NAV_ITEMS.find((i) => pathname.startsWith(i.href))?.label || 'Vendeur'}
+              {NAV_ITEMS.find((i) => i.exact ? pathname === i.href : pathname.startsWith(i.href))?.label || 'Vendeur'}
             </h2>
           </header>
           <main className="flex-1 p-6 lg:p-8">{children}</main>
