@@ -7,8 +7,9 @@ import { ordersApi, paymentApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
 import { useAuthStore } from '@/stores/auth-store';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
-import MomoForm, { validateBeninPhone } from '@/components/payment/MomoForm';
+import MomoForm from '@/components/payment/MomoForm';
 import PaymentSuccess from '@/components/payment/PaymentSuccess';
+import { usePhoneValidation } from '@/hooks/usePhoneValidation';
 import type { Order } from '@/types';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -22,8 +23,18 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  // Phone validation via hook
+  const {
+    phoneNumber,
+    normalizedPhone,
+    operator,
+    isValid: phoneIsValid,
+    error: phoneError,
+    message: phoneSuccessMessage,
+    setPhone,
+    validateFor,
+  } = usePhoneValidation();
 
   // Payment success state
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -59,29 +70,26 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const handleSubmitPayment = async () => {
     if (!selectedMethod || !order) return;
 
-    // Validate phone
+    // Validate phone for mobile money methods
     if (selectedMethod === 'mtn_momo' || selectedMethod === 'moov_money') {
-      const error = validateBeninPhone(phoneNumber, selectedMethod as 'mtn_momo' | 'moov_money');
-      if (error) {
-        setPhoneError(error);
+      const result = validateFor(selectedMethod);
+      if (!result.valid) {
         return;
       }
-      setPhoneError(null);
     }
 
     setProcessing(true);
 
     try {
-      const cleanedPhone = '229' + phoneNumber.replace(/[\s-]/g, '');
+      // Envoyer le numéro normalisé en 8 chiffres
+      const cleanedPhone = normalizedPhone;
 
       // Simulate processing delay
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const response = await paymentApi.pay(order.id, {
-        payment_method: selectedMethod === 'mtn_momo' || selectedMethod === 'moov_money'
-          ? 'mobile_money'
-          : selectedMethod,
-        phone_number: cleanedPhone,
+        payment_method: selectedMethod,
+        phone_number: cleanedPhone || undefined,
         amount: order.total,
       });
 
@@ -172,11 +180,11 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
             <MomoForm
               method={selectedMethod}
               phoneNumber={phoneNumber}
-              onPhoneChange={(val) => {
-                setPhoneNumber(val);
-                setPhoneError(null);
-              }}
+              onPhoneChange={setPhone}
               error={phoneError}
+              operator={operator}
+              isValid={phoneIsValid}
+              successMessage={phoneSuccessMessage}
             />
           )}
 
@@ -208,7 +216,11 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
           {/* Submit button */}
           <button
             onClick={handleSubmitPayment}
-            disabled={!selectedMethod || processing || (selectedMethod !== 'cash_on_delivery' && !phoneNumber)}
+            disabled={
+              !selectedMethod ||
+              processing ||
+              ((selectedMethod === 'mtn_momo' || selectedMethod === 'moov_money') && !phoneIsValid)
+            }
             className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
             {processing ? (

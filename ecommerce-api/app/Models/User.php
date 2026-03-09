@@ -96,5 +96,42 @@ public function wishlistProducts()
     return $this->belongsToMany(Product::class, 'wishlists')->withTimestamps();
 }
 
+    public function shop()
+    {
+        return $this->hasOne(Shop::class);
+    }
 
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function commissions()
+    {
+        return $this->hasMany(Commission::class, 'seller_id');
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(Withdrawal::class);
+    }
+
+    public function shippingZones()
+    {
+        return $this->hasMany(ShippingZone::class, 'seller_id');
+    }
+
+    public function conversations()
+    {
+        return Conversation::where('buyer_id', $this->id)
+            ->orWhere('seller_id', $this->id);
+    }
+
+    public function getOrCreateWallet(): Wallet
+    {
+        return $this->wallet ?? $this->wallet()->create([
+            'balance' => 0, 'pending_balance' => 0,
+            'total_earned' => 0, 'total_withdrawn' => 0,
+        ]);
+    }
 }

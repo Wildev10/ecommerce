@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Package, ShoppingCart, Tag, Users, Ticket,
-  CreditCard, Star, Menu, X, ChevronLeft,
+  CreditCard, Star, Menu, X, ChevronLeft, Store, Percent,
+  AlertTriangle, Wallet,
 } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/protected-route';
 import { useAuthStore } from '@/stores/auth-store';
@@ -16,6 +17,10 @@ const NAV_ITEMS = [
   { href: '/admin/orders', label: 'Commandes', icon: ShoppingCart },
   { href: '/admin/categories', label: 'Catégories', icon: Tag },
   { href: '/admin/users', label: 'Utilisateurs', icon: Users },
+  { href: '/admin/sellers', label: 'Vendeurs', icon: Store },
+  { href: '/admin/commissions', label: 'Commissions', icon: Percent },
+  { href: '/admin/disputes', label: 'Litiges', icon: AlertTriangle },
+  { href: '/admin/withdrawals', label: 'Retraits', icon: Wallet },
   { href: '/admin/coupons', label: 'Coupons', icon: Ticket },
   { href: '/admin/payments', label: 'Paiements', icon: CreditCard },
   { href: '/admin/reviews', label: 'Avis', icon: Star },

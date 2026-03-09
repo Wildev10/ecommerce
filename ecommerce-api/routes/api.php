@@ -17,6 +17,10 @@ use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\AdminController;
 use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\DisputeController;
+use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\WalletController;
 
 // ╔═══════════════════════════════════════════════╗
 // ║         SANTÉ & MONITORING                    ║
@@ -54,6 +58,9 @@ Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
 // Recherche globale
 Route::get('/search', [SearchController::class, 'index']);
 Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
+
+// Boutiques publiques
+Route::get('/shops/{slug}', [ShopController::class, 'show']);
 
 // ╔═══════════════════════════════════════════════╗
 // ║         ROUTES PROTÉGÉES (auth:sanctum)       ║
@@ -108,6 +115,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+    Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
+
+    // ── Litiges ──
+    Route::get('/disputes', [DisputeController::class, 'index']);
+    Route::post('/disputes', [DisputeController::class, 'store']);
+    Route::get('/disputes/{dispute}', [DisputeController::class, 'show']);
+    Route::post('/disputes/{dispute}/messages', [DisputeController::class, 'addMessage']);
+
+    // ── Messagerie ──
+    Route::get('/conversations', [ConversationController::class, 'index']);
+    Route::post('/conversations', [ConversationController::class, 'store']);
+    Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
 
     // ── Gestion produits (vendeur/admin) ──
     Route::middleware('seller')->group(function () {
@@ -119,6 +139,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/seller/orders', [SellerController::class, 'orders']);
         Route::get('/seller/orders/{id}', [SellerController::class, 'orderShow']);
         Route::put('/seller/orders/{id}/status', [SellerController::class, 'updateOrderStatus']);
+        Route::put('/seller/orders/{id}/tracking', [SellerController::class, 'updateTracking']);
+
+        // Boutique
+        Route::get('/seller/shop', [ShopController::class, 'myShop']);
+        Route::post('/seller/shop', [ShopController::class, 'upsert']);
+
+        // Wallet
+        Route::get('/seller/wallet', [WalletController::class, 'show']);
+        Route::get('/seller/withdrawals', [WalletController::class, 'withdrawals']);
+        Route::post('/seller/withdrawals', [WalletController::class, 'requestWithdrawal']);
+
+        // Zones de livraison
+        Route::get('/seller/shipping-zones', [SellerController::class, 'shippingZones']);
+        Route::post('/seller/shipping-zones', [SellerController::class, 'storeShippingZone']);
+        Route::put('/seller/shipping-zones/{id}', [SellerController::class, 'updateShippingZone']);
+        Route::delete('/seller/shipping-zones/{id}', [SellerController::class, 'destroyShippingZone']);
     });
 
     // ╔═══════════════════════════════════════════════╗
@@ -172,5 +208,26 @@ Route::middleware('auth:sanctum')->group(function () {
         // Modération avis
         Route::get('/reviews', [AdminController::class, 'reviews']);
         Route::delete('/reviews/{id}', [AdminController::class, 'deleteReview']);
+
+        // Vendeurs
+        Route::get('/sellers', [AdminController::class, 'sellers']);
+        Route::put('/sellers/{id}/approve', [AdminController::class, 'approveSeller']);
+        Route::put('/sellers/{id}/reject', [AdminController::class, 'rejectSeller']);
+        Route::put('/sellers/{id}/ban', [AdminController::class, 'banSeller']);
+
+        // Commissions
+        Route::get('/commissions', [AdminController::class, 'commissions']);
+        Route::get('/commissions/stats', [AdminController::class, 'commissionStats']);
+        Route::put('/settings/commission-rate', [AdminController::class, 'updateCommissionRate']);
+
+        // Litiges (admin)
+        Route::get('/disputes', [DisputeController::class, 'index']);
+        Route::get('/disputes/{dispute}', [DisputeController::class, 'show']);
+        Route::post('/disputes/{dispute}/messages', [DisputeController::class, 'addMessage']);
+        Route::put('/disputes/{dispute}/status', [DisputeController::class, 'updateStatus']);
+
+        // Retraits (admin)
+        Route::get('/withdrawals', [WalletController::class, 'adminIndex']);
+        Route::put('/withdrawals/{id}/process', [WalletController::class, 'process']);
     });
 });

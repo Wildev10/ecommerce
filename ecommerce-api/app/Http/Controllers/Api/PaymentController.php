@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PhoneRequest;
 use App\Models\Payment;
 use App\Models\Order;
+use App\Services\PhoneValidationService;
+use App\Services\CommissionService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -18,7 +21,7 @@ class PaymentController extends Controller
      * POST /api/orders/{orderId}/pay — Payer une commande
      * Accès : Authentifié (propriétaire de la commande)
      */
-    public function pay(Request $request, $orderId)
+    public function pay(PhoneRequest $request, $orderId, PhoneValidationService $phoneService)
     {
         $order = Order::findOrFail($orderId);
 
@@ -30,10 +33,14 @@ class PaymentController extends Controller
             return $this->error('Cette commande est déjà payée', 400);
         }
 
-        $request->validate([
-            'payment_method' => 'required|in:credit_card,paypal,bank_transfer,cash_on_delivery,mobile_money,mtn_momo,moov_money',
-            'phone_number' => 'nullable|string|max:20',
-        ]);
+        // Normaliser le numéro de téléphone en 8 chiffres
+        $normalizedPhone = null;
+        $operator = null;
+        if ($request->phone_number && in_array($request->payment_method, ['mobile_money', 'mtn_momo', 'moov_money'])) {
+            $normalizedPhone = $phoneService->normalize($request->phone_number);
+            $detection = $phoneService->detectOperator($request->phone_number);
+            $operator = $detection['operator'];
+        }
 
         $payment = Payment::create([
             'order_id'       => $order->id,
@@ -42,7 +49,7 @@ class PaymentController extends Controller
             'method'         => $request->payment_method,
             'status'         => 'completed',
             'transaction_id' => 'TXN-' . strtoupper(uniqid()),
-            'phone_number'   => $request->phone_number,
+            'phone_number'   => $normalizedPhone,
         ]);
 
         $order->update([
@@ -50,6 +57,10 @@ class PaymentController extends Controller
             'payment_status' => 'paid',
             'transaction_id' => $payment->transaction_id,
         ]);
+
+        // Record commissions for each seller
+        $order->load('items.product');
+        app(CommissionService::class)->recordForOrder($order);
 
         $payment->load(['user', 'order']);
         Mail::to(auth()->user())->send(new PaymentConfirmationMail($payment));
