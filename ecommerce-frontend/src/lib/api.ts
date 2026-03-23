@@ -465,6 +465,16 @@ export const adminApi = {
     return res.data;
   },
 
+  assignDeliveryPerson: async (orderId: number, deliveryPersonId: number) => {
+    const res = await axios.put(`/admin/orders/${orderId}/assign-delivery`, { delivery_person_id: deliveryPersonId });
+    return res.data;
+  },
+
+  getDeliveryPersons: async (params?: { search?: string }) => {
+    const res = await axios.get<ApiResponse<Array<{ id: number; name: string; email: string; phone: string | null; active_deliveries: number; total_deliveries: number }>>>('/admin/delivery-persons', { params });
+    return res.data.data;
+  },
+
   getProducts: async (params?: { per_page?: number; page?: number }) => {
     const res = await axios.get('/admin/products', { params });
     return res.data;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, CreditCard, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, MapPin, CreditCard, Clock, Loader2, Truck } from 'lucide-react';
 import { ordersApi, adminApi } from '@/lib/api';
 import type { Order } from '@/types';
 import { formatPrice, formatDate } from '@/lib/api-helpers';
@@ -25,6 +25,8 @@ const STATUS_OPTIONS = ['confirmed', 'processing', 'shipped', 'delivered', 'canc
 const PAYMENT_LABELS: Record<string, string> = {
   cash_on_delivery: 'Paiement à la livraison',
   mobile_money: 'Mobile Money',
+  mtn_momo: 'MTN MoMo',
+  moov_money: 'Moov Money',
   card: 'Carte bancaire',
 };
 
@@ -36,8 +38,11 @@ export default function AdminOrderDetailPage() {
   const [newStatus, setNewStatus] = useState('');
   const [comment, setComment] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [deliveryPersons, setDeliveryPersons] = useState<Array<{ id: number; name: string; email: string; phone: string | null; active_deliveries: number; total_deliveries: number }>>([]);
+  const [selectedDeliveryPerson, setSelectedDeliveryPerson] = useState<number | ''>('');
+  const [assigningDelivery, setAssigningDelivery] = useState(false);
 
-  useEffect(() => { loadOrder(); }, [params.id]);
+  useEffect(() => { loadOrder(); loadDeliveryPersons(); }, [params.id]);
 
   const loadOrder = async () => {
     setLoading(true);
@@ -45,11 +50,35 @@ export default function AdminOrderDetailPage() {
       const data = await ordersApi.getById(Number(params.id));
       setOrder(data);
       setNewStatus(data.status);
+      setSelectedDeliveryPerson(data.delivery_person_id || '');
     } catch (error) {
       toast.error(extractErrorMessage(error));
       router.push('/admin/orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDeliveryPersons = async () => {
+    try {
+      const data = await adminApi.getDeliveryPersons();
+      setDeliveryPersons(data);
+    } catch {
+      // Ignore — optional feature
+    }
+  };
+
+  const handleAssignDelivery = async () => {
+    if (!order || !selectedDeliveryPerson) return;
+    setAssigningDelivery(true);
+    try {
+      await adminApi.assignDeliveryPerson(order.id, Number(selectedDeliveryPerson));
+      toast.success('Livreur assigné avec succès');
+      loadOrder();
+    } catch (error) {
+      toast.error(extractErrorMessage(error));
+    } finally {
+      setAssigningDelivery(false);
     }
   };
 
@@ -140,6 +169,41 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
 
+          {/* Assign delivery person */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Truck className="h-5 w-5" /> Assigner un livreur
+            </h2>
+            {order.delivery_person && (
+              <div className="mb-3 p-3 bg-green-50 rounded-lg">
+                <p className="text-sm font-medium text-green-800">Livreur actuel : {order.delivery_person.name}</p>
+                <p className="text-xs text-green-600">{order.delivery_person.email}</p>
+              </div>
+            )}
+            <div className="space-y-3">
+              <select
+                value={selectedDeliveryPerson}
+                onChange={e => setSelectedDeliveryPerson(e.target.value ? Number(e.target.value) : '')}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="">Sélectionner un livreur</option>
+                {deliveryPersons.map(dp => (
+                  <option key={dp.id} value={dp.id}>
+                    {dp.name} — {dp.active_deliveries} en cours, {dp.total_deliveries} livrées
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleAssignDelivery}
+                disabled={assigningDelivery || !selectedDeliveryPerson || selectedDeliveryPerson === order.delivery_person_id}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2 w-full justify-center"
+              >
+                {assigningDelivery && <Loader2 className="h-4 w-4 animate-spin" />}
+                Assigner le livreur
+              </button>
+            </div>
+          </div>
+
           {/* History */}
           {order.status_history && order.status_history.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm p-6">
@@ -201,7 +265,19 @@ export default function AdminOrderDetailPage() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="font-bold mb-3 flex items-center gap-2"><CreditCard className="h-4 w-4" /> Paiement</h3>
             <p className="text-sm">{PAYMENT_LABELS[order.payment_method] || order.payment_method}</p>
+            <p className="text-xs text-gray-500 mt-1">Statut : {order.payment_status}</p>
           </div>
+
+          {/* Tracking */}
+          {order.tracking_number && (
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="font-bold mb-3 flex items-center gap-2"><Truck className="h-4 w-4" /> Suivi</h3>
+              <p className="text-sm">N° : {order.tracking_number}</p>
+              {order.estimated_delivery && (
+                <p className="text-xs text-gray-500 mt-1">Livraison estimée : {formatDate(order.estimated_delivery)}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

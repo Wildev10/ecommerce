@@ -74,4 +74,32 @@ class CommissionService
             }
         }
     }
+
+    /**
+     * Reverse commissions when an order is refunded.
+     * Deducts from wallet and marks commissions as cancelled.
+     */
+    public function reverseForOrder(Order $order): void
+    {
+        $commissions = Commission::where('order_id', $order->id)
+            ->whereIn('status', ['pending', 'paid'])
+            ->get();
+
+        foreach ($commissions as $commission) {
+            $seller = User::find($commission->seller_id);
+            if ($seller) {
+                $wallet = $seller->getOrCreateWallet();
+
+                if ($commission->status === 'pending') {
+                    $wallet->decrement('pending_balance', $commission->seller_amount);
+                } else {
+                    $wallet->decrement('balance', $commission->seller_amount);
+                }
+
+                $wallet->decrement('total_earned', $commission->seller_amount);
+            }
+
+            $commission->update(['status' => 'cancelled']);
+        }
+    }
 }

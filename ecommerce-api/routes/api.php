@@ -184,6 +184,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Commandes
         Route::get('/orders', [AdminController::class, 'orders']);
         Route::put('/orders/{id}/status', [AdminController::class, 'updateOrderStatus']);
+        Route::put('/orders/{id}/assign-delivery', [AdminController::class, 'assignDeliveryPerson']);
+
+        // Livreurs
+        Route::get('/delivery-persons', [AdminController::class, 'deliveryPersons']);
 
         // Produits (admin)
         Route::get('/products', [AdminController::class, 'products']);

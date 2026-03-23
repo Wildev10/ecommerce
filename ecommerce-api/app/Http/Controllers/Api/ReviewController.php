@@ -123,7 +123,7 @@ class ReviewController extends Controller
         $user = $request->user();
 
         // Seul le vendeur propriétaire du produit peut répondre
-        if (!$user->isSeller() || $review->product->user_id !== $user->id) {
+        if (!$user->isSeller() || $review->product->seller_id !== $user->id) {
             return $this->error('Seul le vendeur de ce produit peut répondre.', 403);
         }
 

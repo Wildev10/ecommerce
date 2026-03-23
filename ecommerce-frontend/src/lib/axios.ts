@@ -43,19 +43,83 @@ api.interceptors.request.use(
 );
 
 // ============================================
-// Response Interceptor — Gère 401
+// Response Interceptor — Gère 401 avec token refresh
 // ============================================
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: unknown) => void }> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (token) {
+      prom.resolve(token);
+    } else {
+      prom.reject(error);
+    }
+  });
+  failedQueue = [];
+};
+
+const forceLogout = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth-storage');
+    localStorage.removeItem('cart-storage');
+    if (!window.location.pathname.includes('/login')) {
+      window.location.href = '/login';
+    }
+  }
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-storage');
-        localStorage.removeItem('cart-storage');
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't retry refresh or login endpoints
+      if (originalRequest.url?.includes('/auth/refresh') || originalRequest.url?.includes('/login')) {
+        forceLogout();
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return api(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await api.post('/auth/refresh');
+        const newToken = res.data?.data?.token;
+
+        if (newToken && typeof window !== 'undefined') {
+          const stored = localStorage.getItem('auth-storage');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            parsed.state.token = newToken;
+            localStorage.setItem('auth-storage', JSON.stringify(parsed));
+          }
         }
+
+        processQueue(null, newToken);
+
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        forceLogout();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

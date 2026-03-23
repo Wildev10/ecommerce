@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Services\CommissionService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -96,6 +97,16 @@ class DeliveryController extends Controller
 
         $oldStatus = $order->status;
         $order->update(['status' => $newStatus]);
+
+        // Si livré + cash on delivery, marquer comme payé
+        if ($newStatus === 'delivered' && $order->payment_method === 'cash_on_delivery') {
+            $order->update(['payment_status' => 'paid']);
+        }
+
+        // Si livré, transférer les commissions de pending vers available
+        if ($newStatus === 'delivered') {
+            app(CommissionService::class)->settleForOrder($order);
+        }
 
         OrderStatusHistory::create([
             'order_id' => $order->id,

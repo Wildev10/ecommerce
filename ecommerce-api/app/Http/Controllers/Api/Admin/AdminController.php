@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderStatusChangedMail;
+use App\Services\CommissionService;
 
 class AdminController extends Controller
 {
@@ -238,6 +239,11 @@ class AdminController extends Controller
             $order->update(['payment_status' => 'paid']);
         }
 
+        // Si livré, transférer les commissions de pending vers available
+        if ($request->status === 'delivered') {
+            app(CommissionService::class)->settleForOrder($order);
+        }
+
         $order->statusHistory()->create([
             'old_status' => $oldStatus,
             'new_status' => $request->status,
@@ -252,6 +258,76 @@ class AdminController extends Controller
             $order,
             'Statut mis à jour'
         );
+    }
+
+    /**
+     * PUT /api/admin/orders/{id}/assign-delivery — Assigner un livreur à une commande
+     * Accès : Admin
+     */
+    public function assignDeliveryPerson(Request $request, $id)
+    {
+        $request->validate([
+            'delivery_person_id' => 'required|exists:users,id',
+        ]);
+
+        $deliveryPerson = User::where('id', $request->delivery_person_id)
+            ->where('role', 'delivery')
+            ->where('is_active', true)
+            ->first();
+
+        if (!$deliveryPerson) {
+            return $this->error('Livreur introuvable ou inactif', 404);
+        }
+
+        $order = Order::findOrFail($id);
+
+        if (!in_array($order->status, ['confirmed', 'processing', 'shipped'])) {
+            return $this->error('Cette commande ne peut pas être assignée à un livreur dans son état actuel', 400);
+        }
+
+        $order->update(['delivery_person_id' => $deliveryPerson->id]);
+
+        $order->statusHistory()->create([
+            'old_status' => $order->status,
+            'new_status' => $order->status,
+            'note'       => "Livreur assigné : {$deliveryPerson->name}",
+            'changed_by' => auth()->id(),
+        ]);
+
+        $order->load(['user', 'deliveryPerson', 'items', 'address']);
+
+        return $this->success($order, 'Livreur assigné avec succès');
+    }
+
+    /**
+     * GET /api/admin/delivery-persons — Liste des livreurs disponibles
+     * Accès : Admin
+     */
+    public function deliveryPersons(Request $request)
+    {
+        $query = User::where('role', 'delivery')->where('is_active', true);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $deliveryPersons = $query->select('id', 'name', 'email', 'phone')
+            ->withCount([
+                'deliveryOrders as active_deliveries' => function ($q) {
+                    $q->whereIn('status', ['shipped', 'delivering']);
+                },
+                'deliveryOrders as total_deliveries' => function ($q) {
+                    $q->where('status', 'delivered');
+                },
+            ])
+            ->get();
+
+        return $this->success($deliveryPersons, 'Liste des livreurs');
     }
 
     /**

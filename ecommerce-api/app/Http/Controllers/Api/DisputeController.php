@@ -50,6 +50,11 @@ class DisputeController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
+        // Limiter les litiges à 30 jours après la livraison
+        if ($order->status === 'delivered' && $order->updated_at->diffInDays(now()) > 30) {
+            return $this->error('Le délai pour ouvrir un litige est dépassé (30 jours après livraison).', 400);
+        }
+
         // One open dispute per order
         $existing = Dispute::where('order_id', $order->id)
             ->whereIn('status', ['open', 'in_progress'])

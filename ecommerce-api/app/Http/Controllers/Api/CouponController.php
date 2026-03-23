@@ -30,12 +30,12 @@ class CouponController extends Controller
     {
         $request->validate([
             'code'       => 'required|string|unique:coupons,code',
-            'discount'   => 'required|numeric|min:0',
+            'discount'   => 'required|numeric|gt:0',
             'type'       => 'required|in:fixed,percent',
             'min_amount' => 'nullable|numeric|min:0',
             'max_uses'   => 'nullable|integer|min:1',
             'starts_at'  => 'nullable|date',
-            'expires_at' => 'nullable|date|after:today',
+            'expires_at' => 'nullable|date|after:starts_at',
             'is_active'  => 'nullable|boolean',
         ]);
 
@@ -70,12 +70,12 @@ class CouponController extends Controller
     {
         $request->validate([
             'code'       => 'sometimes|string|unique:coupons,code,' . $coupon->id,
-            'discount'   => 'sometimes|numeric|min:0',
+            'discount'   => 'sometimes|numeric|gt:0',
             'type'       => 'sometimes|in:fixed,percent',
             'min_amount' => 'nullable|numeric|min:0',
             'max_uses'   => 'nullable|integer|min:1',
             'starts_at'  => 'nullable|date',
-            'expires_at' => 'nullable|date|after:today',
+            'expires_at' => 'nullable|date|after:starts_at',
             'is_active'  => 'nullable|boolean',
         ]);
 

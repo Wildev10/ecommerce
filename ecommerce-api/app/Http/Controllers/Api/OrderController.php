@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\Product;
+use App\Models\ShippingZone;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderConfirmationMail;
 use App\Mail\OrderStatusChangedMail;
 use App\Mail\OrderCancelledMail;
+use App\Services\CommissionService;
 
 class OrderController extends Controller
 {
@@ -110,8 +112,25 @@ class OrderController extends Controller
             $couponId = $coupon->id;
         }
 
-        // Frais de livraison
-        $shippingFee = $subtotal >= 50000 ? 0 : 2000;
+        // Frais de livraison basés sur les zones des vendeurs
+        $shippingFee = 0;
+        $deliveryCity = $address->city;
+        $sellerIds = $cartItems->pluck('product.seller_id')->unique();
+
+        foreach ($sellerIds as $sellerId) {
+            $zone = ShippingZone::where('seller_id', $sellerId)
+                ->where('is_active', true)
+                ->where('name', $deliveryCity)
+                ->first();
+
+            if ($zone) {
+                $shippingFee += $zone->price;
+            } else {
+                // Fallback : frais par défaut si le vendeur n'a pas de zone pour cette ville
+                $shippingFee += $subtotal >= 50000 ? 0 : 2000;
+            }
+        }
+
         $total = $subtotal - $discount + $shippingFee;
 
         // Créer la commande dans une transaction
@@ -180,7 +199,7 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $query = Order::with(['items.product', 'address', 'coupon', 'statusHistory.changedBy', 'user', 'payment']);
+        $query = Order::with(['items.product', 'address', 'coupon', 'statusHistory.changedBy', 'user', 'payment', 'deliveryPerson']);
 
         if ($user->role === 'admin') {
             $order = $query->findOrFail($id);
@@ -236,6 +255,11 @@ class OrderController extends Controller
         // Si livré, marquer comme payé (cash on delivery)
         if ($request->status === 'delivered' && $order->payment_method === 'cash_on_delivery') {
             $order->update(['payment_status' => Order::PAYMENT_PAID]);
+        }
+
+        // Si livré, transférer les commissions de pending vers available
+        if ($request->status === 'delivered') {
+            app(CommissionService::class)->settleForOrder($order);
         }
 
         // Historique

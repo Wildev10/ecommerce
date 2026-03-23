@@ -148,6 +148,9 @@ class PaymentController extends Controller
             \App\Models\Product::where('id', $item->product_id)->increment('stock', $item->quantity);
         }
 
+        // Reverser les commissions vendeurs
+        app(CommissionService::class)->reverseForOrder($order);
+
         $order->statusHistory()->create([
             'old_status' => $order->getOriginal('status') ?? $order->status,
             'new_status' => 'refunded',
