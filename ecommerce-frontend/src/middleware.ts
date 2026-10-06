@@ -13,6 +13,7 @@ const PROTECTED_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: '/profile',  roles: ['buyer', 'seller', 'admin', 'delivery'] },
   { prefix: '/disputes', roles: ['buyer', 'seller', 'admin'] },
   { prefix: '/messages', roles: ['buyer', 'seller', 'admin'] },
+  { prefix: '/payment', roles: ['buyer', 'seller', 'admin', 'delivery'] },
 ];
 
 export function middleware(request: NextRequest) {

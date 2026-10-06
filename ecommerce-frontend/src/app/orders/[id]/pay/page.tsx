@@ -82,11 +82,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
     setProcessing(true);
 
     try {
-      // Envoyer le numéro normalisé en 8 chiffres
       const cleanedPhone = normalizedPhone;
-
-      // Simulate processing delay
-      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const response = await paymentApi.pay(order.id, {
         payment_method: selectedMethod,
@@ -94,8 +90,15 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
         amount: order.total,
       });
 
-      const payment = response.data;
-      setTransactionId(payment?.transaction_id || `TXN-${Date.now()}`);
+      const data = response.data;
+
+      if (data?.redirect_url) {
+        toast.success('Redirection vers FedaPay...');
+        window.location.href = data.redirect_url;
+        return;
+      }
+
+      setTransactionId(data?.transaction_id || data?.payment?.transaction_id || '');
       setPaymentSuccess(true);
       toast.success('Paiement effectué avec succès !');
     } catch (error: unknown) {
@@ -157,8 +160,9 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
               <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
               <h3 className="text-lg font-semibold text-gray-900">Traitement en cours...</h3>
               <p className="text-sm text-gray-600">
-                📱 Vous allez recevoir une demande de confirmation sur votre téléphone.
-                Entrez votre code PIN pour valider.
+                {selectedMethod === 'cash_on_delivery'
+                  ? 'Confirmation de votre commande...'
+                  : 'Vous allez être redirigé vers la page de paiement sécurisé FedaPay.'}
               </p>
               <div className="flex items-center justify-center space-x-1.5">
                 <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>

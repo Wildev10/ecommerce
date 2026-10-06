@@ -317,7 +317,7 @@ export const ordersApi = {
 // ============================================
 export const paymentApi = {
   pay: async (orderId: number, data: { payment_method: string; phone_number?: string; amount?: number }) => {
-    const res = await axios.post<ApiResponse<Payment>>(`/orders/${orderId}/pay`, data);
+    const res = await axios.post<ApiResponse<Payment & { redirect_url?: string; transaction_id?: string; payment?: Payment }>>(`/orders/${orderId}/pay`, data);
     return res.data;
   },
 

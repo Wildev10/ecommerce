@@ -97,7 +97,12 @@ class PaymentController extends Controller
                 ],
             ]);
 
-            $token = $transaction->generateToken();
+            $returnUrl = config('services.fedapay.return_url')
+                . '?order_id=' . $order->id;
+
+            $token = $transaction->generateToken([
+                'return_url' => $returnUrl,
+            ]);
 
             $payment = Payment::updateOrCreate(
                 ['order_id' => $order->id],
