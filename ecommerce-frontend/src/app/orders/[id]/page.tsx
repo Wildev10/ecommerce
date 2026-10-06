@@ -7,9 +7,18 @@ import Image from 'next/image';
 import { ordersApi } from '@/lib/api';
 import { formatPrice, formatDate, orderStatusLabels, orderStatusColors, paymentStatusColors } from '@/lib/api-helpers';
 import { useAuthStore } from '@/stores/auth-store';
-import { Loader2, ArrowLeft, CreditCard, MapPin, Clock, Package } from 'lucide-react';
+import { Loader2, ArrowLeft, CreditCard, MapPin, Clock, Package, CheckCircle2 } from 'lucide-react';
 import type { Order } from '@/types';
 import toast from 'react-hot-toast';
+
+const paymentStatusLabel: Record<string, string> = {
+  unpaid: 'Non payé',
+  pending: 'En attente',
+  paid: 'Payé',
+  completed: 'Payé',
+  failed: 'Échoué',
+  refunded: 'Remboursé',
+};
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -47,7 +56,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       toast.success('Commande annulée');
       loadOrder();
     } catch {
-      toast.error('Impossible d\'annuler cette commande');
+      toast.error("Impossible d'annuler cette commande");
     }
   };
 
@@ -61,59 +70,46 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   if (!order) return null;
 
-  const paymentStatusLabel: Record<string, string> = {
-    unpaid: 'Non payé',
-    pending: 'En attente',
-    paid: 'Payé',
-    completed: 'Payé',
-    failed: 'Échoué',
-    refunded: 'Remboursé',
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link
-        href="/orders"
-        className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Retour aux commandes
+      {/* Back */}
+      <Link href="/orders" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-900 text-sm font-medium mb-6 transition">
+        <ArrowLeft className="h-4 w-4" /> Retour aux commandes
       </Link>
 
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header card */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Commande #{order.order_number}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">{formatDate(order.created_at)}</p>
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Commande</p>
+            <h1 className="text-2xl font-bold text-slate-900 mt-0.5">#{order.order_number}</h1>
+            <p className="text-sm text-slate-500 mt-1">{formatDate(order.created_at)}</p>
           </div>
-          <div className="flex items-center space-x-3">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${orderStatusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${orderStatusColors[order.status] || 'bg-slate-100 text-slate-700'}`}>
               {orderStatusLabels[order.status] || order.status}
             </span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${paymentStatusColors[order.payment_status] || 'bg-gray-100 text-gray-800'}`}>
+            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${paymentStatusColors[order.payment_status] || 'bg-slate-100 text-slate-700'}`}>
               {paymentStatusLabel[order.payment_status] || order.payment_status}
             </span>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 mt-4">
+        <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t border-slate-100">
           {(order.payment_status === 'unpaid' || order.payment_status === 'pending') && order.status !== 'cancelled' && (
             <Link
               href={`/orders/${order.id}/pay`}
-              className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition"
             >
-              <CreditCard className="h-4 w-4 mr-2" />
+              <CreditCard className="h-4 w-4" />
               Payer maintenant
             </Link>
           )}
           {(order.status === 'pending' || order.status === 'confirmed') && (
             <button
               onClick={handleCancel}
-              className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50"
+              className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-red-600 border-2 border-red-200 hover:bg-red-50 rounded-xl transition"
             >
               Annuler la commande
             </button>
@@ -121,53 +117,61 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Items */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Package className="h-5 w-5 mr-2" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Left: Items + History */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Items */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Package className="h-5 w-5 text-blue-600" />
               Articles ({order.items?.length || 0})
             </h2>
-            <div className="divide-y">
+            <div className="divide-y divide-slate-50">
               {order.items?.map((item) => (
                 <div key={item.id} className="py-4 flex items-center gap-4">
-                  <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="h-16 w-16 bg-slate-100 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
                     {item.product?.image_url ? (
-                      <Image src={item.product.image_url} alt={item.product_name} width={64} height={64} className="h-full w-full object-cover rounded-lg" />
+                      <Image src={item.product.image_url} alt={item.product_name} width={64} height={64} className="h-full w-full object-cover" />
                     ) : (
-                      <Package className="h-6 w-6 text-gray-400" />
+                      <Package className="h-6 w-6 text-slate-300" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{item.product_name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{item.product_name}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {formatPrice(item.product_price)} × {item.quantity}
                     </p>
                   </div>
-                  <p className="font-bold text-gray-900">{formatPrice(item.total)}</p>
+                  <p className="font-bold text-slate-800 shrink-0">{formatPrice(item.total)}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Status History */}
+          {/* Status timeline */}
           {order.status_history && order.status_history.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border p-6 mt-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
-                Historique
+            <div className="bg-white rounded-2xl border border-slate-100 p-6">
+              <h2 className="text-base font-bold text-slate-900 mb-5 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-600" />
+                Historique de la commande
               </h2>
-              <div className="space-y-4">
-                {order.status_history.map((entry) => (
-                  <div key={entry.id} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm text-gray-900">
+              <div className="space-y-0">
+                {order.status_history.map((entry, idx) => (
+                  <div key={entry.id} className="flex items-start gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                      </div>
+                      {idx < order.status_history.length - 1 && (
+                        <div className="w-0.5 h-8 bg-slate-100 my-1" />
+                      )}
+                    </div>
+                    <div className="pb-4 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900">
                         {orderStatusLabels[entry.old_status] || entry.old_status} → {orderStatusLabels[entry.new_status] || entry.new_status}
                       </p>
-                      {entry.note && <p className="text-xs text-gray-500">{entry.note}</p>}
-                      <p className="text-xs text-gray-400">{formatDate(entry.created_at)}</p>
+                      {entry.note && <p className="text-xs text-slate-500 mt-0.5">{entry.note}</p>}
+                      <p className="text-xs text-slate-400 mt-0.5">{formatDate(entry.created_at)}</p>
                     </div>
                   </div>
                 ))}
@@ -176,64 +180,65 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
+        {/* Right: Summary + Address + Payment */}
+        <div className="space-y-5">
           {/* Summary */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Sous-total</span>
-                <span>{formatPrice(order.subtotal)}</span>
+          <div className="bg-white rounded-2xl border border-slate-100 p-5">
+            <h2 className="text-base font-bold text-slate-900 mb-4">Résumé</h2>
+            <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between text-slate-600">
+                <span>Sous-total</span>
+                <span className="font-medium text-slate-800">{formatPrice(order.subtotal)}</span>
               </div>
               {order.discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
+                <div className="flex justify-between text-green-600">
                   <span>Réduction</span>
-                  <span>-{formatPrice(order.discount)}</span>
+                  <span className="font-semibold">-{formatPrice(order.discount)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Livraison</span>
-                <span>{order.shipping_fee > 0 ? formatPrice(order.shipping_fee) : 'Gratuite'}</span>
+              <div className="flex justify-between text-slate-600">
+                <span>Livraison</span>
+                <span className={order.shipping_fee === 0 ? 'text-green-600 font-semibold' : 'font-medium text-slate-800'}>
+                  {order.shipping_fee > 0 ? formatPrice(order.shipping_fee) : 'Gratuite'}
+                </span>
               </div>
-              <hr />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span className="text-blue-600">{formatPrice(order.total)}</span>
-              </div>
+            </div>
+            <div className="border-t border-slate-100 mt-3 pt-3 flex justify-between">
+              <span className="font-bold text-slate-900">Total</span>
+              <span className="font-bold text-blue-700 text-lg">{formatPrice(order.total)}</span>
             </div>
           </div>
 
-          {/* Delivery Address */}
+          {/* Delivery address */}
           {order.address && (
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                <MapPin className="h-5 w-5 mr-2" />
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-600" />
                 Adresse de livraison
               </h2>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p className="font-medium text-gray-900">{order.address.full_name}</p>
+              <div className="text-sm text-slate-600 space-y-1">
+                <p className="font-semibold text-slate-900">{order.address.full_name}</p>
                 <p>{order.address.street_address}</p>
                 <p>{order.address.quarter}, {order.address.city}</p>
-                {order.address.landmark && <p className="text-gray-500">Repère : {order.address.landmark}</p>}
-                <p>{order.address.phone}</p>
+                {order.address.landmark && <p className="text-slate-400">Repère : {order.address.landmark}</p>}
+                <p className="font-medium text-slate-700 mt-1">{order.address.phone}</p>
               </div>
             </div>
           )}
 
-          {/* Payment info */}
+          {/* Payment */}
           {order.payment && (
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                <CreditCard className="h-5 w-5 mr-2" />
+            <div className="bg-white rounded-2xl border border-slate-100 p-5">
+              <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-blue-600" />
                 Paiement
               </h2>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>Méthode : {order.payment_method === 'mobile_money' ? 'Mobile Money' : order.payment_method}</p>
+              <div className="text-sm text-slate-600 space-y-1.5">
+                <p>Méthode : <span className="font-medium text-slate-800">{order.payment_method === 'mobile_money' ? 'Mobile Money' : order.payment_method === 'cash_on_delivery' ? 'À la livraison' : order.payment_method}</span></p>
                 {order.payment.transaction_id && (
-                  <p className="font-mono text-xs">Transaction : {order.payment.transaction_id}</p>
+                  <p className="font-mono text-xs bg-slate-50 px-2 py-1 rounded">#{order.payment.transaction_id}</p>
                 )}
-                <p>Statut : {paymentStatusLabel[order.payment.status] || order.payment.status}</p>
+                <p>Statut : <span className="font-medium text-slate-800">{paymentStatusLabel[order.payment.status] || order.payment.status}</span></p>
               </div>
             </div>
           )}

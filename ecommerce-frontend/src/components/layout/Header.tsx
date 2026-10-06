@@ -11,10 +11,23 @@ import {
   Search,
   Package,
   Shield,
+  Heart,
+  User,
+  ChevronDown,
+  Truck,
+  Phone,
+  MapPin,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
 import { useAuth } from '@/hooks/useAuth';
+
+const NAV_LINKS = [
+  { label: 'Accueil', href: '/' },
+  { label: 'Produits', href: '/products' },
+  { label: 'Catégories', href: '/products', hasDropdown: true },
+  { label: 'Promotions', href: '/products?sort=popular' },
+];
 
 export default function Header() {
   const router = useRouter();
@@ -23,6 +36,7 @@ export default function Header() {
   const { logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const totalItems = getTotalItems();
 
@@ -37,245 +51,264 @@ export default function Header() {
   const handleLogout = async () => {
     await logout();
     setMobileMenuOpen(false);
+    setUserMenuOpen(false);
     router.push('/');
   };
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header className="sticky top-0 z-50 bg-white" style={{ boxShadow: 'var(--shadow)' }}>
+      {/* Top bar */}
+      <div className="bg-slate-900 text-slate-300 text-xs py-2 hidden md:block">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-1.5">
+              <Truck className="h-3.5 w-3.5 text-orange-400" />
+              Livraison gratuite dès <span className="text-white font-medium">50.000 FCFA</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-orange-400" />
+              Livraison partout au Bénin
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-orange-400" />
+              +229 XX XX XX XX
+            </span>
+            {!isAuthenticated && (
+              <span>
+                <Link href="/login" className="hover:text-white transition">Connexion</Link>
+                {' · '}
+                <Link href="/register" className="hover:text-white transition">Inscription</Link>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center gap-6 h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <Package className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">E-Shop</span>
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <div className="w-9 h-9 bg-linear-to-br from-blue-700 to-blue-900 rounded-xl flex items-center justify-center shadow-sm">
+              <Package className="h-5 w-5 text-white" />
+            </div>
+            <div className="hidden sm:block">
+              <span className="block text-lg font-bold text-slate-900 leading-tight">E-Shop</span>
+              <span className="block text-[10px] font-medium text-orange-500 leading-tight tracking-wide uppercase">Bénin</span>
+            </div>
           </Link>
 
-          {/* Barre de recherche - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-8">
-            <div className="relative w-full">
+          {/* Search bar — desktop */}
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
+            <div className="relative w-full flex">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher un produit..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Rechercher un produit, une marque..."
+                className="w-full pl-5 pr-4 py-2.5 border-2 border-slate-200 rounded-l-xl text-sm focus:outline-none focus:border-blue-600 bg-slate-50 transition"
               />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-r-xl transition flex items-center gap-2 font-medium text-sm"
+              >
+                <Search className="h-4 w-4" />
+                <span className="hidden lg:inline">Rechercher</span>
+              </button>
             </div>
           </form>
 
-          {/* Actions - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/products" className="text-gray-600 hover:text-gray-900 font-medium">
-              Produits
+          {/* Actions — desktop */}
+          <div className="flex items-center gap-1 ml-auto md:ml-0">
+            {/* Wishlist */}
+            <Link
+              href={isAuthenticated ? '/products?wishlist=true' : '/login'}
+              className="hidden md:flex p-2.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition"
+              title="Favoris"
+            >
+              <Heart className="h-5 w-5" />
             </Link>
 
-            {/* Panier */}
-            <Link href="/cart" className="relative p-2 text-gray-600 hover:text-gray-900">
-              <ShoppingCart size={24} />
+            {/* Cart */}
+            <Link
+              href="/cart"
+              className="relative flex items-center gap-2 px-3 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl transition"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              <span className="hidden lg:inline text-sm font-medium">Panier</span>
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
                   {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
             </Link>
 
+            {/* User menu — desktop */}
             {isAuthenticated && user ? (
-              <div className="flex items-center space-x-3">
-                {/* Lien Admin */}
-                {user.role === 'admin' && (
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center space-x-1 text-purple-600 hover:text-purple-800 font-medium"
-                  >
-                    <Shield size={18} />
-                    <span>Admin</span>
-                  </Link>
-                )}
-
-                {/* Lien Vendeur */}
-                {user.role === 'seller' && (
-                  <Link
-                    href="/seller"
-                    className="flex items-center space-x-1 text-green-600 hover:text-green-800 font-medium"
-                  >
-                    <Package size={18} />
-                    <span>Espace Vendeur</span>
-                  </Link>
-                )}
-
-                {/* Lien Livreur */}
-                {user.role === 'delivery' && (
-                  <Link
-                    href="/delivery"
-                    className="flex items-center space-x-1 text-orange-600 hover:text-orange-800 font-medium"
-                  >
-                    <Package size={18} />
-                    <span>Mes Livraisons</span>
-                  </Link>
-                )}
-
-                {/* Menu utilisateur */}
-                <Link
-                  href="/orders"
-                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900"
-                >
-                  <Package size={18} />
-                  <span>Commandes</span>
-                </Link>
-
+              <div className="relative hidden md:block">
                 <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-1 text-red-600 hover:text-red-800"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-slate-100 rounded-xl transition"
                 >
-                  <LogOut size={18} />
-                  <span>Déconnexion</span>
-                </button>
-
-                <Link
-                  href="/profile"
-                  className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-                >
-                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="h-8 w-8 rounded-full bg-linear-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-sm font-bold">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm font-medium text-gray-700 hidden lg:inline">{user.name}</span>
-                </Link>
+                  <span className="text-sm font-medium text-slate-700 max-w-[80px] truncate hidden lg:block">{user.name.split(' ')[0]}</span>
+                  <ChevronDown className="h-4 w-4 text-slate-400 hidden lg:block" />
+                </button>
+
+                {userMenuOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50"
+                    onMouseLeave={() => setUserMenuOpen(false)}
+                  >
+                    <div className="px-4 py-2 border-b border-slate-100 mb-1">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
+                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                    </div>
+                    <Link href="/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition" onClick={() => setUserMenuOpen(false)}>
+                      <User className="h-4 w-4 text-slate-400" />
+                      Mon profil
+                    </Link>
+                    <Link href="/orders" className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition" onClick={() => setUserMenuOpen(false)}>
+                      <Package className="h-4 w-4 text-slate-400" />
+                      Mes commandes
+                    </Link>
+                    {user.role === 'admin' && (
+                      <Link href="/dashboard" className="flex items-center gap-3 px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 transition" onClick={() => setUserMenuOpen(false)}>
+                        <Shield className="h-4 w-4" />
+                        Administration
+                      </Link>
+                    )}
+                    {user.role === 'seller' && (
+                      <Link href="/seller" className="flex items-center gap-3 px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition" onClick={() => setUserMenuOpen(false)}>
+                        <Package className="h-4 w-4" />
+                        Espace Vendeur
+                      </Link>
+                    )}
+                    {user.role === 'delivery' && (
+                      <Link href="/delivery" className="flex items-center gap-3 px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 transition" onClick={() => setUserMenuOpen(false)}>
+                        <Truck className="h-4 w-4" />
+                        Mes Livraisons
+                      </Link>
+                    )}
+                    <div className="border-t border-slate-100 mt-1 pt-1">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Déconnexion
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
-                >
+              <div className="hidden md:flex items-center gap-2">
+                <Link href="/login" className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-xl font-medium transition">
                   Connexion
                 </Link>
-                <Link
-                  href="/register"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-                >
+                <Link href="/register" className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition">
                   Inscription
                 </Link>
               </div>
             )}
-          </div>
 
-          {/* Bouton menu mobile */}
-          <div className="md:hidden flex items-center space-x-2">
-            <Link href="/cart" className="relative p-2 text-gray-600">
-              <ShoppingCart size={24} />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
+            {/* Hamburger — mobile */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-gray-600"
+              className="md:hidden p-2.5 text-slate-600 hover:bg-slate-100 rounded-xl transition"
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
-        {/* Menu mobile */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t py-4 space-y-3">
-            {/* Recherche mobile */}
-            <form onSubmit={handleSearch} className="relative">
+        {/* Navigation bar — desktop */}
+        <nav className="hidden md:flex items-center gap-1 pb-2 border-t border-slate-100 pt-1">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
+            >
+              {link.label}
+              {link.hasDropdown && <ChevronDown className="h-3.5 w-3.5" />}
+            </Link>
+          ))}
+          <div className="ml-auto">
+            <span className="text-xs text-orange-600 font-semibold bg-orange-50 px-3 py-1.5 rounded-full">
+              🔥 Promotions en cours
+            </span>
+          </div>
+        </nav>
+      </div>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-100 bg-white shadow-lg">
+          <div className="p-4 space-y-3">
+            {/* Search mobile */}
+            <form onSubmit={handleSearch} className="flex">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+                className="flex-1 px-4 py-2.5 border-2 border-slate-200 rounded-l-xl text-sm focus:outline-none focus:border-blue-600 bg-slate-50"
               />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <button type="submit" className="px-4 py-2.5 bg-orange-500 text-white rounded-r-xl">
+                <Search className="h-4 w-4" />
+              </button>
             </form>
 
-            <Link
-              href="/products"
-              className="block px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Produits
-            </Link>
+            <div className="space-y-1">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-xl"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
 
-            {isAuthenticated && user ? (
-              <>
-                {user.role === 'admin' && (
-                  <Link
-                    href="/dashboard"
-                    className="block px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Administration
-                  </Link>
-                )}
-                {user.role === 'seller' && (
-                  <Link
-                    href="/seller"
-                    className="block px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Espace Vendeur
-                  </Link>
-                )}
-                {user.role === 'delivery' && (
-                  <Link
-                    href="/delivery"
-                    className="block px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Mes Livraisons
-                  </Link>
-                )}
-                <Link
-                  href="/profile"
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                    {user.name.charAt(0).toUpperCase()}
+            <div className="border-t border-slate-100 pt-3 space-y-1">
+              {isAuthenticated && user ? (
+                <>
+                  <div className="flex items-center gap-3 px-4 py-2">
+                    <div className="h-9 w-9 rounded-full bg-linear-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+                      <p className="text-xs text-slate-500">{user.email}</p>
+                    </div>
                   </div>
-                  <span>{user.name}</span>
-                </Link>
-                <Link
-                  href="/orders"
-                  className="block px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Mes commandes
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
-                >
-                  Déconnexion
-                </button>
-              </>
-            ) : (
-              <div className="flex space-x-2 px-4">
-                <Link
-                  href="/login"
-                  className="flex-1 text-center py-2 border border-blue-600 text-blue-600 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Connexion
-                </Link>
-                <Link
-                  href="/register"
-                  className="flex-1 text-center py-2 bg-blue-600 text-white rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Inscription
-                </Link>
-              </div>
-            )}
+                  <Link href="/profile" className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-xl" onClick={() => setMobileMenuOpen(false)}>Mon profil</Link>
+                  <Link href="/orders" className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-xl" onClick={() => setMobileMenuOpen(false)}>Mes commandes</Link>
+                  {user.role === 'admin' && <Link href="/dashboard" className="block px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 rounded-xl" onClick={() => setMobileMenuOpen(false)}>Administration</Link>}
+                  {user.role === 'seller' && <Link href="/seller" className="block px-4 py-2.5 text-sm text-green-700 hover:bg-green-50 rounded-xl" onClick={() => setMobileMenuOpen(false)}>Espace Vendeur</Link>}
+                  {user.role === 'delivery' && <Link href="/delivery" className="block px-4 py-2.5 text-sm text-orange-700 hover:bg-orange-50 rounded-xl" onClick={() => setMobileMenuOpen(false)}>Mes Livraisons</Link>}
+                  <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl font-medium">
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-2 px-2">
+                  <Link href="/login" className="flex-1 text-center py-2.5 border-2 border-blue-600 text-blue-600 rounded-xl text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Connexion</Link>
+                  <Link href="/register" className="flex-1 text-center py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Inscription</Link>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 }

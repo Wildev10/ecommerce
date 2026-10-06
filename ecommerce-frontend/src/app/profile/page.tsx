@@ -241,7 +241,7 @@ export default function ProfilePage() {
       )}
 
       {/* Hero card */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
+      <div className="bg-linear-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
         <div className="relative flex flex-col sm:flex-row items-center gap-6">

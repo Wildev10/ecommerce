@@ -301,6 +301,43 @@ class ProductSeeder extends Seeder
             ],
         ];
 
+        // Images Unsplash spécifiques à chaque produit
+        $productImages = [
+            'iPhone 15 Pro Max'              => 'photo-1510557880182-3d4d3cba35a5',
+            'Samsung Galaxy S24 Ultra'       => 'photo-1610945265064-0e34e5519bbf',
+            'Xiaomi Redmi Note 13 Pro'       => 'photo-1585386959984-a4155224a1ad',
+            'Tecno Spark 20 Pro+'            => 'photo-1574944985070-8f3ebc6b79d2',
+            'MacBook Air M2'                 => 'photo-1517336714731-489689fd1ca8',
+            'HP Pavilion 15'                 => 'photo-1496181133206-80ce9b88a853',
+            'AirPods Pro 2ème Génération'    => 'photo-1600294037681-c80b4cb5b434',
+            'Chargeur Sans Fil Samsung 15W'  => 'photo-1589740985049-85a18cf73234',
+            'Chemise Lin Premium'            => 'photo-1603252109303-2751441dd157',
+            'Jean Slim Fit Stretch'          => 'photo-1542272604-787c3835535d',
+            'Polo Classic Coton'             => 'photo-1586363104862-3a5e2ab60d99',
+            'Robe Wax Ankara'                => 'photo-1596783074918-c84cb06531ca',
+            'Sac à Main Cuir Véritable'      => 'photo-1584917865442-de89df76afd3',
+            'Canapé 3 Places Moderne'        => 'photo-1555041469-a586c61ea9bc',
+            'Table Basse Bois & Métal'       => 'photo-1555041469-a586c61ea9bc',
+            'Lampe de Chevet LED Tactile'    => 'photo-1513506003901-1e6a35291748',
+            'Tapis de Yoga Premium'          => 'photo-1544367567-0f2fcb009e0b',
+            'Kit Haltères Ajustables 20kg'   => 'photo-1534438327276-14e5300c3a48',
+            'Ballon Adidas UCL Pro'          => 'photo-1575361204480-aadea25e6e68',
+            'Maillot PSG Domicile 2025/26'   => 'photo-1607252650355-f7fd0460ccdb',
+            "L'Étranger - Albert Camus"      => 'photo-1544716278-ca5e3f4abd8c',
+            "Tout s'effondre - Chinua Achebe" => 'photo-1495640452828-3df6795cf69b',
+            'Palette Fenty Beauty Snap Shadows' => 'photo-1522335789203-aabd1fc54bc9',
+            'Rouge à Lèvres MAC Ruby Woo'    => 'photo-1586495777744-4e6ffeef8a7d',
+            'Sérum Vitamine C The Ordinary'  => 'photo-1620916566398-39f1143ab7be',
+            'LEGO Classic Boîte 790 Pièces'  => 'photo-1587654780291-39c9404d746b',
+            'Monopoly Édition Afrique'       => 'photo-1606503825008-909a67e63c3d',
+            'Riz Basmati Premium 5kg'        => 'photo-1536304929831-ee1ca9d44906',
+            "Huile d'Olive Extra Vierge 1L"  => 'photo-1474979266404-7eaacbcd87c5',
+            'Pack Jus de Fruits Tropicaux x12' => 'photo-1534353436294-0dbd4bdac845',
+            'Gari Blanc du Bénin 5kg'        => 'photo-1604329760661-e71dc83f8f26',
+            'Nike Air Zoom Pegasus 41'       => 'photo-1542291026-7eec264c27ff',
+            'Dior Sauvage EDP 100ml'         => 'photo-1541643600914-78b084683702',
+        ];
+
         foreach ($products as $index => $productData) {
             $categorySlug = $productData['category_slug'];
             unset($productData['category_slug']);
@@ -311,16 +348,18 @@ class ProductSeeder extends Seeder
             }
 
             $sellerId = $sellers[$index % count($sellers)];
+            $photoId  = $productImages[$productData['name']] ?? 'photo-1556742049-0cfed4f6a45d';
+            $imageUrl = "https://images.unsplash.com/{$photoId}?w=640&h=640&fit=crop&q=80";
 
             Product::create(array_merge($productData, [
                 'seller_id'   => $sellerId,
                 'category_id' => $category->id,
                 'slug'        => Str::slug($productData['name']) . '-' . ($index + 1),
-                'image'       => 'https://picsum.photos/seed/' . urlencode($productData['name']) . '/640/480',
+                'image'       => $imageUrl,
                 'gallery'     => [
-                    'https://picsum.photos/seed/' . urlencode($productData['name'] . '-1') . '/640/480',
-                    'https://picsum.photos/seed/' . urlencode($productData['name'] . '-2') . '/640/480',
-                    'https://picsum.photos/seed/' . urlencode($productData['name'] . '-3') . '/640/480',
+                    "https://images.unsplash.com/{$photoId}?w=640&h=640&fit=crop&q=80",
+                    "https://images.unsplash.com/{$photoId}?w=640&h=640&fit=crop&q=75",
+                    "https://images.unsplash.com/{$photoId}?w=640&h=640&fit=crop&q=70",
                 ],
                 'is_active'   => true,
             ]));
