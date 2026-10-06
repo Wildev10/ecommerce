@@ -44,7 +44,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
           <div className="flex items-center justify-between h-16 px-5 border-b border-slate-800 shrink-0">
             <Link href="/seller" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
               <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                <Store className="h-4.5 w-4.5 text-white" />
+                <Store className="h-4 w-4 text-white" />
               </div>
               <div>
                 <span className="block text-sm font-bold text-white leading-tight">Espace Vendeur</span>
@@ -72,7 +72,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                       : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
-                  <Icon className="h-4.5 w-4.5 shrink-0" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   {item.label}
                 </Link>
               );

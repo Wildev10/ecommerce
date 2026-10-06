@@ -7,7 +7,7 @@ import { formatDate, extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';
 import type { Dispute, PaginationMeta } from '@/types';
-import { AlertTriangle, Plus, X, Loader2, ChevronLeft, ChevronRight, ChevronRight as ArrowRight } from 'lucide-react';
+import { AlertTriangle, Plus, X, Loader2, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   open:        { label: 'Ouvert',   color: 'bg-red-100 text-red-700' },
@@ -134,7 +134,7 @@ export default function DisputesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
-                    <AlertTriangle className="h-4.5 w-4.5 text-red-400" />
+                    <AlertTriangle className="h-4 w-4 text-red-400" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition">{d.subject}</h3>
