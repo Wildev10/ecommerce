@@ -79,6 +79,11 @@ export const authApi = {
     return res.data;
   },
 
+  resendVerification: async () => {
+    const res = await axios.post<ApiResponse<null>>('/email/verification-notification');
+    return res.data;
+  },
+
   forgotPassword: async (data: { email: string }) => {
     const res = await axios.post<ApiResponse<null>>('/auth/forgot-password', data);
     return res.data;
