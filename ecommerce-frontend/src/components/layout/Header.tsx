@@ -91,7 +91,7 @@ export default function Header() {
         <div className="flex items-center gap-6 h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl flex items-center justify-center shadow-sm">
+            <div className="w-9 h-9 bg-linear-to-br from-blue-700 to-blue-900 rounded-xl flex items-center justify-center shadow-sm">
               <Package className="h-5 w-5 text-white" />
             </div>
             <div className="hidden sm:block">
@@ -152,7 +152,7 @@ export default function Header() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-slate-100 rounded-xl transition"
                 >
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="h-8 w-8 rounded-full bg-linear-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-sm font-bold">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-slate-700 max-w-[80px] truncate hidden lg:block">{user.name.split(' ')[0]}</span>
@@ -282,7 +282,7 @@ export default function Header() {
               {isAuthenticated && user ? (
                 <>
                   <div className="flex items-center gap-3 px-4 py-2">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold">
+                    <div className="h-9 w-9 rounded-full bg-linear-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
