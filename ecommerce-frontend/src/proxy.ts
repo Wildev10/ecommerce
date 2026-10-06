@@ -16,7 +16,7 @@ const PROTECTED_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: '/payment', roles: ['buyer', 'seller', 'admin', 'delivery'] },
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const match = PROTECTED_ROUTES.find((r) => pathname.startsWith(r.prefix));
