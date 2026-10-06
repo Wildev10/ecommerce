@@ -67,7 +67,7 @@ class DeliveryController extends Controller
 
         $orders = Order::where('delivery_person_id', auth()->id())
             ->where('status', $status)
-            ->with(['user:id,name,email', 'address', 'items.product:id,name,price,image_url'])
+            ->with(['user:id,name,email', 'address', 'items.product:id,name,price,image'])
             ->latest()
             ->paginate($request->get('per_page', 15));
 
