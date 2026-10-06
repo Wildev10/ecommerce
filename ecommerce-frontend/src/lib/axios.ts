@@ -63,6 +63,10 @@ const forceLogout = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('auth-storage');
     localStorage.removeItem('cart-storage');
+    // Clear auth cookies so the Next.js middleware doesn't grant access
+    // to protected routes after the page reloads
+    document.cookie = '__auth_token=; path=/; max-age=0';
+    document.cookie = '__auth_role=; path=/; max-age=0';
     if (!window.location.pathname.includes('/login')) {
       window.location.href = '/login';
     }
