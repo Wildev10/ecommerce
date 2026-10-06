@@ -321,13 +321,14 @@ export interface AdminDashboard {
   orders_today: number;
   revenue_by_period: number;
   orders_by_period: number;
+  period: string;
   active_sellers: number;
   active_buyers: number;
   top_sellers: Array<{
     seller_id: number;
     seller_name: string;
     total_revenue: number;
-    total_orders: number;
+    order_count: number;
   }>;
   top_products: Array<{
     product_id: number;
@@ -336,11 +337,9 @@ export interface AdminDashboard {
     total_revenue: number;
   }>;
   monthly_sales: Array<{ month: number; year: number; revenue: number }>;
-  commission: {
-    total: number;
-    pending: number;
-    rate: number;
-  };
+  total_commissions: number;
+  pending_commissions: number;
+  commission_rate: number;
 }
 
 export interface SellerDashboard {

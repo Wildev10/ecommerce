@@ -76,8 +76,10 @@ export const orderStatusLabels: Record<string, string> = {
   confirmed: 'Confirmée',
   processing: 'En préparation',
   shipped: 'Expédiée',
+  delivering: 'En livraison',
   delivered: 'Livrée',
   cancelled: 'Annulée',
+  refunded: 'Remboursée',
 };
 
 /**
@@ -88,8 +90,10 @@ export const orderStatusColors: Record<string, string> = {
   confirmed: 'bg-blue-100 text-blue-800',
   processing: 'bg-purple-100 text-purple-800',
   shipped: 'bg-indigo-100 text-indigo-800',
+  delivering: 'bg-orange-100 text-orange-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+  refunded: 'bg-gray-100 text-gray-800',
 };
 
 /**
