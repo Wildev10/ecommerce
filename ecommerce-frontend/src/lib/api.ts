@@ -20,7 +20,6 @@ import type {
   Shop,
   Commission,
   Dispute,
-  DisputeMessage,
   Conversation,
   Message,
   Wallet,

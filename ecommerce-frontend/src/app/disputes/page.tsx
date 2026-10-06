@@ -34,6 +34,7 @@ export default function DisputesPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [page]);
 
   const handleSubmit = async (e: React.FormEvent) => {

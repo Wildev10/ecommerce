@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShoppingBag, Truck, Shield, ArrowRight, Star, ShoppingCart } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
@@ -133,10 +134,11 @@ export default function HomePage() {
                 <Link href={`/products/${product.slug}`}>
                   <div className="aspect-square bg-gray-100 relative overflow-hidden">
                     {product.image_url ? (
-                      <img
+                      <Image
                         src={product.image_url}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

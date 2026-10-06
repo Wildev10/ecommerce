@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Package, Search, ToggleLeft, ToggleRight, Trash2, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { adminApi } from '@/lib/api';
 import type { Product } from '@/types';
 import { formatPrice, formatDate } from '@/lib/api-helpers';
@@ -97,7 +98,7 @@ export default function DashboardProductsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {product.image_url ? (
-                          <img src={product.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                          <Image src={product.image_url} alt="" width={40} height={40} className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
                           <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                             <Package className="h-5 w-5 text-gray-400" />

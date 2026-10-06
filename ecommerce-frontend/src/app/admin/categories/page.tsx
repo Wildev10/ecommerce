@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Tag, Plus, Pencil, Trash2, Loader2, X, Check } from 'lucide-react';
+import Image from 'next/image';
 import { adminApi } from '@/lib/api';
 import type { Category } from '@/types';
 import { extractErrorMessage } from '@/lib/api-helpers';
@@ -134,7 +135,7 @@ export default function AdminCategoriesPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {cat.image ? (
-                          <img src={cat.image} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                          <Image src={cat.image} alt="" width={40} height={40} className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
                           <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <Tag className="h-5 w-5 text-blue-600" />

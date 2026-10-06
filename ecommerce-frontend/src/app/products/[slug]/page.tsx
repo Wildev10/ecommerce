@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShoppingCart, ArrowLeft, Minus, Plus, Star, Heart, Check } from 'lucide-react';
 import { productsApi, reviewsApi, wishlistApi } from '@/lib/api';
 import { formatPrice, formatDate } from '@/lib/api-helpers';
@@ -31,6 +32,7 @@ export default function ProductDetailPage() {
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (slug) loadProduct(); }, [slug]);
 
   const loadProduct = async () => {
@@ -111,9 +113,9 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         {/* Image */}
-        <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
+        <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden relative">
           {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+            <Image src={product.image_url} alt={product.name} fill className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center"><ShoppingCart className="h-20 w-20 text-gray-300" /></div>
           )}

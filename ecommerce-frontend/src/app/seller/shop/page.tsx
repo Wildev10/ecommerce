@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { sellerApi } from '@/lib/api';
+import Image from 'next/image';
 import { extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';
@@ -64,7 +65,7 @@ export default function SellerShopPage() {
 
       {shop?.banner_url && (
         <div className="relative rounded-xl overflow-hidden h-40">
-          <img src={shop.banner_url} alt="Bannière" className="w-full h-full object-cover" />
+          <Image src={shop.banner_url} alt="Bannière" fill className="object-cover" />
         </div>
       )}
 
@@ -72,7 +73,7 @@ export default function SellerShopPage() {
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
             {shop?.logo_url ? (
-              <img src={shop.logo_url} alt="Logo" className="w-full h-full object-cover" />
+              <Image src={shop.logo_url} alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
             ) : (
               <Store className="h-8 w-8 text-gray-400" />
             )}

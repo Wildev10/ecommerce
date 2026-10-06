@@ -22,6 +22,13 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    'fedapay' => [
+        'secret_key'     => env('FEDAPAY_SECRET_KEY'),
+        'env'            => env('FEDAPAY_ENV', 'sandbox'),
+        'webhook_url'    => env('FEDAPAY_WEBHOOK_URL', env('APP_URL') . '/api/webhooks/fedapay'),
+        'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

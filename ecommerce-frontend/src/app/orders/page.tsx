@@ -24,6 +24,7 @@ export default function OrdersPage() {
       return;
     }
     loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, isAuthenticated]);
 
   const loadOrders = async () => {

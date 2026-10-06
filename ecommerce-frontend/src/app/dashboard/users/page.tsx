@@ -22,12 +22,6 @@ const ROLE_COLORS: Record<string, string> = {
   delivery: 'bg-orange-100 text-orange-700',
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Admin',
-  seller: 'Vendeur',
-  buyer: 'Acheteur',
-  delivery: 'Livreur',
-};
 
 export default function DashboardUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -38,6 +32,7 @@ export default function DashboardUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadUsers(); }, [page]);
 
   const loadUsers = async () => {

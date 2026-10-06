@@ -35,6 +35,7 @@ export default function AdminDisputeDetailPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [params.id]);
 
   const handleSendMessage = async () => {

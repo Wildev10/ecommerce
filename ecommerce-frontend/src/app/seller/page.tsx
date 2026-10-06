@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { sellerApi, productsApi } from '@/lib/api';
+import { sellerApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
 import { Loader2, Package, ShoppingCart, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
 import type { SellerDashboard } from '@/types';

@@ -21,6 +21,12 @@ use App\Http\Controllers\Api\DisputeController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\WebhookController;
+
+// ╔═══════════════════════════════════════════════╗
+// ║         WEBHOOKS (pas d'auth)                 ║
+// ╚═══════════════════════════════════════════════╝
+Route::post('/webhooks/fedapay', [WebhookController::class, 'fedapay']);
 
 // ╔═══════════════════════════════════════════════╗
 // ║         SANTÉ & MONITORING                    ║
@@ -69,6 +75,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Auth ──
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // ── Vérification email ──
+    Route::post('/email/verification-notification', function (\Illuminate\Http\Request $req) {
+        if ($req->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email déjà vérifié.'], 200);
+        }
+        $req->user()->sendEmailVerificationNotification();
+        return response()->json(['message' => 'Lien de vérification renvoyé.']);
+    })->middleware('throttle:6,1');
+
+    Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $req) {
+        $req->fulfill();
+        return response()->json(['message' => 'Email vérifié avec succès.']);
+    })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/user', [AuthController::class, 'profile']);
     Route::put('/user/update', [AuthController::class, 'updateProfile']);
@@ -100,7 +120,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
-    Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/apply-coupon', [OrderController::class, 'applyCoupon']);
     Route::get('/orders/{id}/history', [OrderController::class, 'history']);
     Route::post('/orders/{id}/reorder', [OrderController::class, 'reorder']);
@@ -128,6 +147,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/conversations', [ConversationController::class, 'store']);
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
+
+    // ── Changement de statut commande (vendeur + admin) ──
+    Route::middleware('seller')->put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
 
     // ── Gestion produits (vendeur/admin) ──
     Route::middleware('seller')->group(function () {

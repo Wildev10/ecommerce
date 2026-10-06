@@ -14,6 +14,7 @@ export default function AdminReviewsPage() {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadReviews(); }, [page]);
 
   const loadReviews = async () => {

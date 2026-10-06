@@ -21,6 +21,7 @@ export default function DashboardDeliveriesPage() {
   const [lastPage, setLastPage] = useState(1);
   const [filter, setFilter] = useState('shipped');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadOrders(); }, [page, filter]);
 
   const loadOrders = async () => {

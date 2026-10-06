@@ -4,6 +4,7 @@ import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatPrice } from '@/lib/api-helpers';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 
 export default function CartPage() {
@@ -44,7 +45,7 @@ export default function CartPage() {
             >
               <div className="h-20 w-20 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
                 {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <Image src={item.image} alt={item.name} width={80} height={80} className="w-full h-full object-cover" />
                 ) : (
                   <ShoppingBag className="h-8 w-8 text-gray-400" />
                 )}

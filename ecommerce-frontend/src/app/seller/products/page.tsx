@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { productsApi, categoriesApi } from '@/lib/api';
+import Image from 'next/image';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import { Loader2, Plus, Edit, Trash2, AlertTriangle, X, Package } from 'lucide-react';
 import type { Product, Category, PaginationMeta } from '@/types';
@@ -35,6 +36,7 @@ export default function SellerProductsPage() {
   useEffect(() => {
     loadProducts();
     categoriesApi.getAll().then(setCategories).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const loadProducts = async () => {
@@ -178,7 +180,7 @@ export default function SellerProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                           {product.image_url ? (
-                            <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+                            <Image src={product.image_url} alt="" width={40} height={40} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
                               <Package className="h-5 w-5 text-gray-400" />
@@ -312,6 +314,7 @@ export default function SellerProductsPage() {
                 <div className="flex flex-wrap gap-2 mb-2">
                   {images.map((file, i) => (
                     <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"

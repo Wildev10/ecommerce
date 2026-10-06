@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
 import { formatPrice } from '@/lib/api-helpers';
@@ -29,6 +30,7 @@ export default function ProductDetailPage() {
     if (params.id) {
       loadProduct(Number(params.id));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   const loadProduct = async (id: number) => {
@@ -89,12 +91,13 @@ export default function ProductDetailPage() {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          <div className="aspect-square bg-gray-100">
+          <div className="aspect-square bg-gray-100 relative">
             {product.image_url ? (
-              <img
+              <Image
                 src={product.image_url}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">

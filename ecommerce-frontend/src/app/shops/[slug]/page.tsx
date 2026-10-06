@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { shopApi, conversationApi } from '@/lib/api';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
@@ -34,7 +35,7 @@ export default function ShopPage() {
     if (!user) { router.push('/login'); return; }
     if (!shop) return;
     try {
-      const res = await conversationApi.create({ seller_id: shop.user_id });
+      await conversationApi.create({ seller_id: shop.user_id });
       router.push('/messages');
     } catch (e) { toast.error(extractErrorMessage(e)); }
   };
@@ -47,11 +48,11 @@ export default function ShopPage() {
       {/* Banner */}
       {shop.banner_url && (
         <div className="relative rounded-2xl overflow-hidden h-48 md:h-64">
-          <img src={shop.banner_url} alt={shop.name} className="w-full h-full object-cover" />
+          <Image src={shop.banner_url} alt={shop.name} fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-6 left-6 flex items-center gap-4">
             {shop.logo_url ? (
-              <img src={shop.logo_url} alt="Logo" className="w-16 h-16 rounded-xl border-2 border-white object-cover" />
+              <Image src={shop.logo_url} alt="Logo" width={64} height={64} className="w-16 h-16 rounded-xl border-2 border-white object-cover" />
             ) : (
               <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center">
                 <Store className="h-8 w-8 text-gray-400" />
@@ -71,7 +72,7 @@ export default function ShopPage() {
       {!shop.banner_url && (
         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
           {shop.logo_url ? (
-            <img src={shop.logo_url} alt="Logo" className="w-16 h-16 rounded-xl object-cover" />
+            <Image src={shop.logo_url} alt="Logo" width={64} height={64} className="w-16 h-16 rounded-xl object-cover" />
           ) : (
             <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center">
               <Store className="h-8 w-8 text-gray-400" />
@@ -102,9 +103,9 @@ export default function ShopPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {shop.products?.map((product) => (
             <Link key={product.id} href={`/products/${product.slug}`} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <div className="aspect-square bg-gray-100">
+              <div className="aspect-square bg-gray-100 relative">
                 {product.image_url ? (
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                  <Image src={product.image_url} alt={product.name} fill className="object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
                     <Store className="h-8 w-8" />

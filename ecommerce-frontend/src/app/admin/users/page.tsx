@@ -30,6 +30,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadUsers(); }, [page]);
 
   const loadUsers = async () => {

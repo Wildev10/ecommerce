@@ -33,6 +33,7 @@ export default function AdminSellersPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [page, filter]);
 
   const handleAction = async (id: number, action: 'approve' | 'reject' | 'ban') => {
