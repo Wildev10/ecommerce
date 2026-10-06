@@ -12,8 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Modify the role enum to include 'delivery'
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('buyer', 'seller', 'admin', 'delivery') NOT NULL DEFAULT 'buyer'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('buyer', 'seller', 'admin', 'delivery') NOT NULL DEFAULT 'buyer'");
+        }
     }
 
     /**
@@ -21,7 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert to original enum without 'delivery'
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('buyer', 'seller', 'admin') NOT NULL DEFAULT 'buyer'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('buyer', 'seller', 'admin') NOT NULL DEFAULT 'buyer'");
+        }
     }
 };
