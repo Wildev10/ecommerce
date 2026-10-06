@@ -76,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       : 'text-slate-400 hover:bg-slate-800 hover:text-white border border-transparent'
                   }`}
                 >
-                  <Icon className="h-4.5 w-4.5 shrink-0" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   {item.label}
                 </Link>
               );

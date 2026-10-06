@@ -98,10 +98,10 @@ export default function MessagesPage() {
                     )}
                   </div>
                   {c.last_message && (
-                    <p className="text-xs text-slate-400 truncate mt-1 ml-10.5">{c.last_message.content}</p>
+                    <p className="text-xs text-slate-400 truncate mt-1 ml-[42px]">{c.last_message.content}</p>
                   )}
                   {c.product && (
-                    <p className="text-xs text-blue-500 truncate mt-0.5 ml-10.5">Re: {c.product.name}</p>
+                    <p className="text-xs text-blue-500 truncate mt-0.5 ml-[42px]">Re: {c.product.name}</p>
                   )}
                 </button>
               );
