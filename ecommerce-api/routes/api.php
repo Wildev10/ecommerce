@@ -1,0 +1,276 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\Api\SellerController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\DisputeController;
+use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\WebhookController;
+
+// ╔═══════════════════════════════════════════════╗
+// ║         WEBHOOKS (pas d'auth)                 ║
+// ╚═══════════════════════════════════════════════╝
+Route::post('/webhooks/fedapay', [WebhookController::class, 'fedapay']);
+
+// ╔═══════════════════════════════════════════════╗
+// ║         SANTÉ & MONITORING                    ║
+// ╚═══════════════════════════════════════════════╝
+Route::get('/health', [HealthController::class, 'index']);
+Route::get('/health/db', [HealthController::class, 'db']);
+Route::get('/metrics', [HealthController::class, 'metrics']);
+
+// ╔═══════════════════════════════════════════════╗
+// ║         AUTH PUBLIQUES (rate limited)          ║
+// ╚═══════════════════════════════════════════════╝
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+});
+
+// ╔═══════════════════════════════════════════════╗
+// ║         RESSOURCES PUBLIQUES                  ║
+// ╚═══════════════════════════════════════════════╝
+// Produits
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/featured', [ProductController::class, 'featured']);
+Route::get('/products/{product}', [ProductController::class, 'show']);
+
+// Catégories
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}', [CategoryController::class, 'show']);
+Route::get('/categories/{category}/products', [CategoryController::class, 'products']);
+
+// Avis produits (lecture publique)
+Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
+
+// Recherche globale
+Route::get('/search', [SearchController::class, 'index']);
+Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
+
+// Boutiques publiques
+Route::get('/shops/{slug}', [ShopController::class, 'show']);
+
+// ╔═══════════════════════════════════════════════╗
+// ║   VÉRIFICATION EMAIL (lien cliqué depuis email)
+// ╚═══════════════════════════════════════════════╝
+Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Http\Request $request, $id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+
+    if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        return redirect($frontendUrl . '/email/verified?status=invalid');
+    }
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect($frontendUrl . '/email/verified?status=already');
+    }
+
+    $user->markEmailAsVerified();
+    event(new \Illuminate\Auth\Events\Verified($user));
+
+    return redirect($frontendUrl . '/email/verified?status=success');
+})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
+// ╔═══════════════════════════════════════════════╗
+// ║         ROUTES PROTÉGÉES (auth:sanctum)       ║
+// ╚═══════════════════════════════════════════════╝
+Route::middleware('auth:sanctum')->group(function () {
+
+    // ── Auth ──
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // ── Renvoyer le lien de vérification ──
+    Route::post('/email/verification-notification', function (\Illuminate\Http\Request $req) {
+        if ($req->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email déjà vérifié.'], 200);
+        }
+        $req->user()->sendEmailVerificationNotification();
+        return response()->json(['message' => 'Lien de vérification renvoyé.']);
+    })->middleware('throttle:6,1');
+
+    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
+    Route::get('/user', [AuthController::class, 'profile']);
+    Route::put('/user/update', [AuthController::class, 'updateProfile']);
+    Route::put('/user/password', [AuthController::class, 'changePassword']);
+
+    // ── Panier ──
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{cartItem}', [CartController::class, 'update']);
+    Route::delete('/cart/{cartItem}', [CartController::class, 'destroy']);
+    Route::delete('/cart', [CartController::class, 'clear']);
+
+    // ── Adresses ──
+    Route::apiResource('addresses', AddressController::class);
+    Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefault']);
+
+    // ── Coupons — vérification client ──
+    Route::post('/coupons/verify', [CouponController::class, 'verify']);
+
+    // ── Favoris (Wishlist) ──
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
+    Route::get('/wishlist/check/{productId}', [WishlistController::class, 'check']);
+    Route::delete('/wishlist', [WishlistController::class, 'clear']);
+
+    // ── Commandes ──
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::post('/orders/apply-coupon', [OrderController::class, 'applyCoupon']);
+    Route::get('/orders/{id}/history', [OrderController::class, 'history']);
+    Route::post('/orders/{id}/reorder', [OrderController::class, 'reorder']);
+
+    // ── Paiement ──
+    Route::post('/orders/{orderId}/pay', [PaymentController::class, 'pay']);
+    Route::get('/payments', [PaymentController::class, 'myPayments']);
+    Route::get('/payments/{id}', [PaymentController::class, 'show']);
+    Route::get('/payments/{orderId}/status', [PaymentController::class, 'status']);
+
+    // ── Avis (écriture) ──
+    Route::post('/products/{product}/reviews', [ReviewController::class, 'store']);
+    Route::put('/reviews/{review}', [ReviewController::class, 'update']);
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+    Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
+
+    // ── Litiges ──
+    Route::get('/disputes', [DisputeController::class, 'index']);
+    Route::post('/disputes', [DisputeController::class, 'store']);
+    Route::get('/disputes/{dispute}', [DisputeController::class, 'show']);
+    Route::post('/disputes/{dispute}/messages', [DisputeController::class, 'addMessage']);
+
+    // ── Messagerie ──
+    Route::get('/conversations', [ConversationController::class, 'index']);
+    Route::post('/conversations', [ConversationController::class, 'store']);
+    Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
+
+    // ── Changement de statut commande (vendeur + admin) ──
+    Route::middleware('seller')->put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+
+    // ── Gestion produits (vendeur/admin) ──
+    Route::middleware('seller')->group(function () {
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{product}', [ProductController::class, 'update']);
+        Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::get('/seller/products', [ProductController::class, 'myProducts']);
+        Route::get('/seller/dashboard', [SellerController::class, 'dashboard']);
+        Route::get('/seller/orders', [SellerController::class, 'orders']);
+        Route::get('/seller/orders/{id}', [SellerController::class, 'orderShow']);
+        Route::put('/seller/orders/{id}/status', [SellerController::class, 'updateOrderStatus']);
+        Route::put('/seller/orders/{id}/tracking', [SellerController::class, 'updateTracking']);
+
+        // Boutique
+        Route::get('/seller/shop', [ShopController::class, 'myShop']);
+        Route::post('/seller/shop', [ShopController::class, 'upsert']);
+
+        // Wallet
+        Route::get('/seller/wallet', [WalletController::class, 'show']);
+        Route::get('/seller/withdrawals', [WalletController::class, 'withdrawals']);
+        Route::post('/seller/withdrawals', [WalletController::class, 'requestWithdrawal']);
+
+        // Zones de livraison
+        Route::get('/seller/shipping-zones', [SellerController::class, 'shippingZones']);
+        Route::post('/seller/shipping-zones', [SellerController::class, 'storeShippingZone']);
+        Route::put('/seller/shipping-zones/{id}', [SellerController::class, 'updateShippingZone']);
+        Route::delete('/seller/shipping-zones/{id}', [SellerController::class, 'destroyShippingZone']);
+    });
+
+    // ╔═══════════════════════════════════════════════╗
+    // ║         LIVREUR (DELIVERY)                    ║
+    // ╚═══════════════════════════════════════════════╝
+    Route::middleware('delivery')->prefix('delivery')->group(function () {
+        Route::get('/dashboard', [DeliveryController::class, 'dashboard']);
+        Route::get('/orders', [DeliveryController::class, 'orders']);
+        Route::put('/orders/{id}/status', [DeliveryController::class, 'updateOrderStatus']);
+        Route::get('/history', [DeliveryController::class, 'history']);
+    });
+
+    // ╔═══════════════════════════════════════════════╗
+    // ║         ADMIN                                 ║
+    // ╚═══════════════════════════════════════════════╝
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+
+        // Utilisateurs
+        Route::get('/users', [AdminController::class, 'users']);
+        Route::get('/users/{id}', [AdminController::class, 'userShow']);
+        Route::put('/users/{id}/role', [AdminController::class, 'updateRole']);
+        Route::put('/users/{id}/toggle', [AdminController::class, 'toggleUser']);
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+
+        // Commandes
+        Route::get('/orders', [AdminController::class, 'orders']);
+        Route::put('/orders/{id}/status', [AdminController::class, 'updateOrderStatus']);
+        Route::put('/orders/{id}/assign-delivery', [AdminController::class, 'assignDeliveryPerson']);
+
+        // Livreurs
+        Route::get('/delivery-persons', [AdminController::class, 'deliveryPersons']);
+
+        // Produits (admin)
+        Route::get('/products', [AdminController::class, 'products']);
+        Route::put('/products/{id}/toggle', [AdminController::class, 'toggleProduct']);
+        Route::delete('/products/{id}', [AdminController::class, 'deleteProduct']);
+
+        // Catégories CRUD admin
+        Route::get('/categories', [CategoryController::class, 'adminIndex']);
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::put('/categories/{category}', [CategoryController::class, 'update']);
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+
+        // Coupons CRUD admin
+        Route::apiResource('coupons', CouponController::class);
+
+        // Paiements (admin)
+        Route::get('/payments', [PaymentController::class, 'index']);
+
+        // Remboursements
+        Route::post('/orders/{orderId}/refund', [PaymentController::class, 'refund']);
+
+        // Modération avis
+        Route::get('/reviews', [AdminController::class, 'reviews']);
+        Route::delete('/reviews/{id}', [AdminController::class, 'deleteReview']);
+
+        // Vendeurs
+        Route::get('/sellers', [AdminController::class, 'sellers']);
+        Route::put('/sellers/{id}/approve', [AdminController::class, 'approveSeller']);
+        Route::put('/sellers/{id}/reject', [AdminController::class, 'rejectSeller']);
+        Route::put('/sellers/{id}/ban', [AdminController::class, 'banSeller']);
+
+        // Commissions
+        Route::get('/commissions', [AdminController::class, 'commissions']);
+        Route::get('/commissions/stats', [AdminController::class, 'commissionStats']);
+        Route::put('/settings/commission-rate', [AdminController::class, 'updateCommissionRate']);
+
+        // Litiges (admin)
+        Route::get('/disputes', [DisputeController::class, 'index']);
+        Route::get('/disputes/{dispute}', [DisputeController::class, 'show']);
+        Route::post('/disputes/{dispute}/messages', [DisputeController::class, 'addMessage']);
+        Route::put('/disputes/{dispute}/status', [DisputeController::class, 'updateStatus']);
+
+        // Retraits (admin)
+        Route::get('/withdrawals', [WalletController::class, 'adminIndex']);
+        Route::put('/withdrawals/{id}/process', [WalletController::class, 'process']);
+    });
+});
