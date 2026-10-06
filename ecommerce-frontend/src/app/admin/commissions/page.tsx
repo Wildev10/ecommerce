@@ -10,7 +10,6 @@ import type { Commission, PaginationMeta } from '@/types';
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending:   { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
   paid:      { label: 'Payée',      color: 'bg-green-100 text-green-800' },
-  refunded:  { label: 'Remboursée', color: 'bg-red-100 text-red-800' },
   cancelled: { label: 'Annulée',    color: 'bg-gray-100 text-gray-800' },
 };
 
@@ -96,7 +95,6 @@ export default function AdminCommissionsPage() {
           <option value="">Tous les statuts</option>
           <option value="pending">En attente</option>
           <option value="paid">Payées</option>
-          <option value="refunded">Remboursées</option>
           <option value="cancelled">Annulées</option>
         </select>
       </div>
