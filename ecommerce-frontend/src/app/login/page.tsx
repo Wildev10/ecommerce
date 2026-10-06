@@ -1,16 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loading } = useAuth();
   const { isAuthenticated, user } = useAuthStore();
+  const redirectTo = searchParams.get('from');
 
   const [formData, setFormData] = useState({
     email: '',
@@ -55,7 +69,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
 
-    await login(formData);
+    await login(formData, redirectTo);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +141,13 @@ export default function LoginPage() {
               </button>
             </div>
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+          </div>
+
+          {/* Mot de passe oublié */}
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+              Mot de passe oublié ?
+            </Link>
           </div>
 
           {/* Bouton submit */}
