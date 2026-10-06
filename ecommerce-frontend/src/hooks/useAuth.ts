@@ -59,10 +59,15 @@ export function useAuth() {
 
       const { user, token } = response.data.data!;
       setAuth(user, token);
-      toast.success('Inscription réussie !');
+      toast.success('Inscription réussie ! Vérifiez votre email.');
 
-      // Redirection vers la page de connexion après inscription
-      router.push('/login');
+      switch (user.role) {
+        case 'seller':
+          router.push('/seller');
+          break;
+        default:
+          router.push('/');
+      }
     } catch (error: unknown) {
       const message = extractErrorMessage(error);
       toast.error(message);
@@ -78,7 +83,7 @@ export function useAuth() {
   /**
    * Connexion
    */
-  const login = async (data: LoginData) => {
+  const login = async (data: LoginData, redirectTo?: string | null) => {
     setLoading(true);
     setErrors({});
 
@@ -92,19 +97,22 @@ export function useAuth() {
       setAuth(user, token);
       toast.success(`Bienvenue, ${user.name} !`);
 
-      // Redirection selon le rôle
-      switch (user.role) {
-        case 'admin':
-          router.push('/dashboard');
-          break;
-        case 'seller':
-          router.push('/seller');
-          break;
-        case 'delivery':
-          router.push('/delivery');
-          break;
-        default:
-          router.push('/');
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        switch (user.role) {
+          case 'admin':
+            router.push('/dashboard');
+            break;
+          case 'seller':
+            router.push('/seller');
+            break;
+          case 'delivery':
+            router.push('/delivery');
+            break;
+          default:
+            router.push('/');
+        }
       }
     } catch (error: unknown) {
       const message = extractErrorMessage(error);
