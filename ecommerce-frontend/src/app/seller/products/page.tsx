@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import Image from 'next/image';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
-import { Loader2, Plus, Edit, Trash2, AlertTriangle, X, Package } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, AlertTriangle, X, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Product, Category, PaginationMeta } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -15,20 +15,12 @@ export default function SellerProductsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [form, setForm] = useState({
-    name: '',
-    description: '',
-    price: '',
-    compare_price: '',
-    stock: '',
-    category_id: '',
-    is_active: true,
+    name: '', description: '', price: '', compare_price: '', stock: '', category_id: '', is_active: true,
   });
   const [images, setImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,21 +37,18 @@ export default function SellerProductsPage() {
       const data = await productsApi.getMyProducts({ page, per_page: 20 });
       setProducts(data.data);
       setMeta(data.meta);
-    } catch {
-      toast.error('Erreur de chargement');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Erreur de chargement'); }
+    finally { setLoading(false); }
   };
 
-  const openCreateModal = () => {
+  const openCreate = () => {
     setEditingProduct(null);
     setForm({ name: '', description: '', price: '', compare_price: '', stock: '', category_id: '', is_active: true });
     setImages([]);
     setShowModal(true);
   };
 
-  const openEditModal = (product: Product) => {
+  const openEdit = (product: Product) => {
     setEditingProduct(product);
     setForm({
       name: product.name,
@@ -77,30 +66,27 @@ export default function SellerProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     try {
-      const formData = new FormData();
-      formData.append('name', form.name);
-      formData.append('description', form.description);
-      formData.append('price', form.price);
-      if (form.compare_price) formData.append('compare_price', form.compare_price);
-      formData.append('stock', form.stock);
-      formData.append('category_id', form.category_id);
-      formData.append('is_active', form.is_active ? '1' : '0');
-
+      const fd = new FormData();
+      fd.append('name', form.name);
+      fd.append('description', form.description);
+      fd.append('price', form.price);
+      if (form.compare_price) fd.append('compare_price', form.compare_price);
+      fd.append('stock', form.stock);
+      fd.append('category_id', form.category_id);
+      fd.append('is_active', form.is_active ? '1' : '0');
       images.forEach((file, i) => {
-        if (i === 0) formData.append('image', file);
-        else formData.append(`gallery[${i - 1}]`, file);
+        if (i === 0) fd.append('image', file);
+        else fd.append(`gallery[${i - 1}]`, file);
       });
 
       if (editingProduct) {
-        await productsApi.update(editingProduct.id, formData);
+        await productsApi.update(editingProduct.id, fd);
         toast.success('Produit mis à jour');
       } else {
-        await productsApi.create(formData);
+        await productsApi.create(fd);
         toast.success('Produit créé');
       }
-
       setShowModal(false);
       loadProducts();
     } catch (error) {
@@ -123,99 +109,100 @@ export default function SellerProductsPage() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (images.length + files.length > 5) {
-      toast.error('Maximum 5 images');
-      return;
-    }
+    if (images.length + files.length > 5) { toast.error('Maximum 5 images'); return; }
     setImages((prev) => [...prev, ...files].slice(0, 5));
   };
 
+  const inputCls = 'w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-600 transition';
+
   if (loading && products.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mes produits</h1>
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Mes produits</h1>
+          {meta && <p className="text-sm text-slate-400 mt-0.5">{meta.total} produit{meta.total > 1 ? 's' : ''}</p>}
+        </div>
         <button
-          onClick={openCreateModal}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+          onClick={openCreate}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-sm transition"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un produit
+          <Plus className="h-4 w-4" /> Ajouter un produit
         </button>
       </div>
 
       {products.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl">
-          <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Aucun produit</h2>
-          <p className="text-gray-500 mb-4">Commencez par ajouter votre premier produit</p>
-          <button onClick={openCreateModal} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+          <Package className="h-14 w-14 text-slate-200 mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-slate-900 mb-2">Aucun produit</h2>
+          <p className="text-slate-400 text-sm mb-5">Commencez par ajouter votre premier produit</p>
+          <button onClick={openCreate} className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">
             Ajouter un produit
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr className="text-left text-sm text-gray-500">
-                  <th className="px-6 py-3 font-medium">Produit</th>
-                  <th className="px-6 py-3 font-medium">Prix</th>
-                  <th className="px-6 py-3 font-medium">Stock</th>
-                  <th className="px-6 py-3 font-medium">Statut</th>
-                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+              <thead>
+                <tr className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                  <th className="px-5 py-3.5">Produit</th>
+                  <th className="px-5 py-3.5">Prix</th>
+                  <th className="px-5 py-3.5">Stock</th>
+                  <th className="px-5 py-3.5">Statut</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-50">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                  <tr key={product.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                        <div className="h-10 w-10 bg-slate-100 rounded-xl shrink-0 overflow-hidden">
                           {product.image_url ? (
                             <Image src={product.image_url} alt="" width={40} height={40} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
-                              <Package className="h-5 w-5 text-gray-400" />
+                              <Package className="h-5 w-5 text-slate-300" />
                             </div>
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">{product.name}</p>
-                          <p className="text-xs text-gray-500">{product.category?.name}</p>
+                          <p className="font-semibold text-slate-900 text-sm">{product.name}</p>
+                          <p className="text-xs text-slate-400">{product.category?.name}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900 text-sm">{formatPrice(product.price)}</p>
+                    <td className="px-5 py-4">
+                      <p className="font-semibold text-slate-900 text-sm">{formatPrice(product.price)}</p>
                       {product.compare_price && product.compare_price > product.price && (
-                        <p className="text-xs text-gray-400 line-through">{formatPrice(product.compare_price)}</p>
+                        <p className="text-xs text-slate-400 line-through">{formatPrice(product.compare_price)}</p>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 text-sm font-medium ${product.stock < 5 ? 'text-red-600' : product.stock < 20 ? 'text-yellow-600' : 'text-green-600'}`}>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1 text-sm font-semibold ${
+                        product.stock === 0 ? 'text-red-600' : product.stock < 5 ? 'text-amber-600' : 'text-emerald-600'
+                      }`}>
                         {product.stock < 5 && <AlertTriangle className="h-3.5 w-3.5" />}
                         {product.stock}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                    <td className="px-5 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        product.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                      }`}>
                         {product.is_active ? 'Actif' : 'Inactif'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEditModal(product)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openEdit(product)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition">
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <button onClick={() => handleDelete(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -227,80 +214,70 @@ export default function SellerProductsPage() {
           </div>
 
           {meta && meta.last_page > 1 && (
-            <div className="flex justify-center space-x-2 p-4 border-t">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 border rounded text-sm disabled:opacity-50">
-                Précédent
-              </button>
-              <span className="px-3 py-1 text-sm text-gray-600">Page {meta.current_page} / {meta.last_page}</span>
-              <button onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))} disabled={page === meta.last_page} className="px-3 py-1 border rounded text-sm disabled:opacity-50">
-                Suivant
-              </button>
+            <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
+              <p className="text-sm text-slate-400">Page {meta.current_page} / {meta.last_page}</p>
+              <div className="flex gap-2">
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 border-2 border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))} disabled={page === meta.last_page} className="p-2 border-2 border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">
                 {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="h-5 w-5 text-gray-500" />
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition">
+                <X className="h-5 w-5 text-slate-400" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-                <input
-                  required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Nom du produit"
-                />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nom *</label>
+                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className={inputCls} placeholder="Nom du produit" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                <textarea
-                  required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2" rows={4} placeholder="Description détaillée"
-                />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description *</label>
+                <textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className={`${inputCls} resize-none`} rows={4} placeholder="Description détaillée" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prix (FCFA) *</label>
-                  <input
-                    required type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="0"
-                  />
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Prix (FCFA) *</label>
+                  <input required type="number" min="0" value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })} className={inputCls} placeholder="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ancien prix (FCFA)</label>
-                  <input
-                    type="number" min="0" value={form.compare_price} onChange={(e) => setForm({ ...form, compare_price: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="0"
-                  />
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ancien prix (FCFA)</label>
+                  <input type="number" min="0" value={form.compare_price}
+                    onChange={(e) => setForm({ ...form, compare_price: e.target.value })} className={inputCls} placeholder="0" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
-                  <input
-                    required type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="0"
-                  />
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Stock *</label>
+                  <input required type="number" min="0" value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: e.target.value })} className={inputCls} placeholder="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie *</label>
-                  <select
-                    required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  >
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Catégorie *</label>
+                  <select required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+                    className={inputCls}>
                     <option value="">Sélectionner</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -310,49 +287,43 @@ export default function SellerProductsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Images (max 5)</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Images (max 5)</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {images.map((file, i) => (
-                    <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+                    <div key={i} className="relative w-20 h-20 bg-slate-100 rounded-xl overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                        className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                      >
+                      <button type="button" onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
                         ×
                       </button>
                     </div>
                   ))}
                 </div>
-                <input
-                  ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageChange}
-                  className="hidden"
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
                 {images.length < 5 && (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-sm text-blue-600 hover:underline">
+                  <button type="button" onClick={() => fileInputRef.current?.click()}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition">
                     + Ajouter des images
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox" id="is_active" checked={form.is_active}
-                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                  className="rounded"
-                />
-                <label htmlFor="is_active" className="text-sm text-gray-700">Produit actif (visible pour les clients)</label>
-              </div>
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input type="checkbox" id="is_active" checked={form.is_active}
+                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded accent-blue-600 w-4 h-4" />
+                <span className="text-sm text-slate-700 font-medium">Produit actif (visible pour les clients)</span>
+              </label>
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                <button type="button" onClick={() => setShowModal(false)}
+                  className="px-5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50 transition">
                   Annuler
                 </button>
-                <button type="submit" disabled={saving} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+                <button type="submit" disabled={saving}
+                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center gap-2 transition">
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {editingProduct ? 'Modifier' : 'Créer'}
+                  {editingProduct ? 'Modifier' : 'Créer le produit'}
                 </button>
               </div>
             </form>
