@@ -203,10 +203,10 @@ export default function DashboardOrderDetailPage() {
             <p className="text-sm">{PAYMENT_LABELS[order.payment_method] || order.payment_method}</p>
             {order.payment_status && (
               <span className={`mt-2 inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                order.payment_status === 'completed' ? 'bg-green-100 text-green-700' :
-                order.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                (order.payment_status === 'paid' || order.payment_status === 'completed') ? 'bg-green-100 text-green-700' :
+                (order.payment_status === 'unpaid' || order.payment_status === 'pending') ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
               }`}>
-                {order.payment_status === 'completed' ? 'Payé' : order.payment_status === 'pending' ? 'En attente' : order.payment_status}
+                {(order.payment_status === 'paid' || order.payment_status === 'completed') ? 'Payé' : (order.payment_status === 'unpaid' || order.payment_status === 'pending') ? 'En attente' : order.payment_status}
               </span>
             )}
           </div>

@@ -96,8 +96,10 @@ export const orderStatusColors: Record<string, string> = {
  * Couleurs des statuts de paiement
  */
 export const paymentStatusColors: Record<string, string> = {
+  unpaid: 'bg-yellow-100 text-yellow-800',
   pending: 'bg-yellow-100 text-yellow-800',
   paid: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
   refunded: 'bg-gray-100 text-gray-800',
 };
