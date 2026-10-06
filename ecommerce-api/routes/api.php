@@ -69,6 +69,27 @@ Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
 Route::get('/shops/{slug}', [ShopController::class, 'show']);
 
 // ╔═══════════════════════════════════════════════╗
+// ║   VÉRIFICATION EMAIL (lien cliqué depuis email)
+// ╚═══════════════════════════════════════════════╝
+Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Http\Request $request, $id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+
+    if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        return redirect($frontendUrl . '/email/verified?status=invalid');
+    }
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect($frontendUrl . '/email/verified?status=already');
+    }
+
+    $user->markEmailAsVerified();
+    event(new \Illuminate\Auth\Events\Verified($user));
+
+    return redirect($frontendUrl . '/email/verified?status=success');
+})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
+// ╔═══════════════════════════════════════════════╗
 // ║         ROUTES PROTÉGÉES (auth:sanctum)       ║
 // ╚═══════════════════════════════════════════════╝
 Route::middleware('auth:sanctum')->group(function () {
@@ -76,7 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Auth ──
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // ── Vérification email ──
+    // ── Renvoyer le lien de vérification ──
     Route::post('/email/verification-notification', function (\Illuminate\Http\Request $req) {
         if ($req->user()->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email déjà vérifié.'], 200);
@@ -85,10 +106,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'Lien de vérification renvoyé.']);
     })->middleware('throttle:6,1');
 
-    Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $req) {
-        $req->fulfill();
-        return response()->json(['message' => 'Email vérifié avec succès.']);
-    })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/user', [AuthController::class, 'profile']);
     Route::put('/user/update', [AuthController::class, 'updateProfile']);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import { authApi, ordersApi, addressApi } from '@/lib/api';
+import { AlertTriangle, Send } from 'lucide-react';
 import { extractErrorMessage, formatDate } from '@/lib/api-helpers';
 import type { Address } from '@/types';
 import Link from 'next/link';
@@ -58,6 +59,7 @@ export default function ProfilePage() {
     confirm: false,
   });
   const [changingPassword, setChangingPassword] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   // New address
   const [showNewAddress, setShowNewAddress] = useState(false);
@@ -121,6 +123,18 @@ export default function ProfilePage() {
       toast.error(extractErrorMessage(error));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendingVerification(true);
+    try {
+      await authApi.resendVerification();
+      toast.success('Lien de vérification envoyé ! Vérifiez votre boîte email.');
+    } catch (error) {
+      toast.error(extractErrorMessage(error));
+    } finally {
+      setResendingVerification(false);
     }
   };
 
@@ -202,6 +216,30 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Email verification banner */}
+      {!user.email_verified_at && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+            <p className="text-sm text-yellow-800">
+              Votre adresse email n&apos;est pas vérifiée. Vérifiez votre boîte de réception ou renvoyez le lien.
+            </p>
+          </div>
+          <button
+            onClick={handleResendVerification}
+            disabled={resendingVerification}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition disabled:opacity-50 shrink-0"
+          >
+            {resendingVerification ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            Renvoyer le lien
+          </button>
+        </div>
+      )}
+
       {/* Hero card */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
