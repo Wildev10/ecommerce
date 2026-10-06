@@ -18,10 +18,14 @@ const nextConfig: NextConfig = {
         pathname: '/storage/**',
       },
       {
-
         // Images placeholder seedées (dev uniquement)
         protocol: 'https',
         hostname: 'picsum.photos',
+      },
+      {
+        // Images produits Unsplash
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       },
     ],
   },
