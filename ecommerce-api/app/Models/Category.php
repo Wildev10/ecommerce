@@ -22,6 +22,15 @@ class Category extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) return null;
+        if (str_starts_with($this->image, 'http')) return $this->image;
+        return url('storage/' . $this->image);
+    }
+
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');

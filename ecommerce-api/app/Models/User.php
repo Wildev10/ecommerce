@@ -40,6 +40,15 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->avatar) return null;
+        if (str_starts_with($this->avatar, 'http')) return $this->avatar;
+        return url('storage/' . $this->avatar);
+    }
+
     public function isBuyer(): bool
     {
         return $this->role === 'buyer';
