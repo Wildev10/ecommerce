@@ -188,6 +188,8 @@ class PaymentController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
+        $oldStatus = $order->status;
+
         $order->payment->update(['status' => 'refunded']);
         $order->update(['status' => 'refunded', 'payment_status' => 'refunded']);
 
@@ -198,7 +200,7 @@ class PaymentController extends Controller
         app(CommissionService::class)->reverseForOrder($order);
 
         $order->statusHistory()->create([
-            'old_status' => $order->getOriginal('status') ?? $order->status,
+            'old_status' => $oldStatus,
             'new_status' => 'refunded',
             'note'       => $request->reason ?? 'Remboursement effectué par admin',
             'changed_by' => auth()->id(),
