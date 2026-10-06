@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Loader2, X, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, X, Check, Ticket, ChevronLeft, ChevronRight } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import type { Coupon } from '@/types';
 import { formatPrice, formatDate, extractErrorMessage } from '@/lib/api-helpers';
 import toast from 'react-hot-toast';
+
+const inputCls = 'w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 transition';
 
 const DEFAULT_FORM = {
   code: '',
@@ -101,96 +103,138 @@ export default function DashboardCouponsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Gestion des coupons</h1>
-        <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Gestion des coupons</h1>
+          <p className="text-sm text-slate-400 mt-0.5">Créez et gérez les codes de réduction</p>
+        </div>
+        <button
+          onClick={() => { resetForm(); setShowForm(true); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold text-sm transition"
+        >
           <Plus className="h-4 w-4" /> Nouveau coupon
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-          <h3 className="font-bold">{editingId ? 'Modifier le coupon' : 'Nouveau coupon'}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Code *</label>
-              <input required value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase()})} className="w-full border rounded-lg px-3 py-2" placeholder="PROMO2024" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-              <select value={form.type} onChange={e => setForm({...form, type: e.target.value as 'fixed' | 'percent'})} className="w-full border rounded-lg px-3 py-2">
-                <option value="fixed">Montant fixe (FCFA)</option>
-                <option value="percent">Pourcentage (%)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Réduction *</label>
-              <input required type="number" value={form.discount} onChange={e => setForm({...form, discount: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Commande minimum</label>
-              <input type="number" value={form.min_amount} onChange={e => setForm({...form, min_amount: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Utilisations max</label>
-              <input type="number" value={form.max_uses} onChange={e => setForm({...form, max_uses: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date d&apos;expiration</label>
-              <input type="date" value={form.expires_at} onChange={e => setForm({...form, expires_at: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-            </div>
-          </div>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={form.is_active} onChange={e => setForm({...form, is_active: e.target.checked})} />
-            <span className="text-sm">Actif</span>
-          </label>
-          <div className="flex gap-2">
-            <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 text-sm">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              {editingId ? 'Mettre à jour' : 'Créer'}
+        <div className="bg-white rounded-2xl border border-slate-100 p-5">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-base font-bold text-slate-900">{editingId ? 'Modifier le coupon' : 'Nouveau coupon'}</h3>
+            <button onClick={resetForm} className="p-1.5 hover:bg-slate-100 rounded-xl transition">
+              <X className="h-4 w-4 text-slate-400" />
             </button>
-            <button type="button" onClick={resetForm} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50"><X className="h-4 w-4 inline" /> Annuler</button>
           </div>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Code *</label>
+                <input required value={form.code}
+                  onChange={e => setForm({...form, code: e.target.value.toUpperCase()})}
+                  className={inputCls} placeholder="PROMO2024" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Type *</label>
+                <select value={form.type} onChange={e => setForm({...form, type: e.target.value as 'fixed' | 'percent'})} className={inputCls}>
+                  <option value="fixed">Montant fixe (FCFA)</option>
+                  <option value="percent">Pourcentage (%)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Réduction *</label>
+                <input required type="number" value={form.discount}
+                  onChange={e => setForm({...form, discount: e.target.value})} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Commande minimum</label>
+                <input type="number" value={form.min_amount}
+                  onChange={e => setForm({...form, min_amount: e.target.value})} className={inputCls} placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Utilisations max</label>
+                <input type="number" value={form.max_uses}
+                  onChange={e => setForm({...form, max_uses: e.target.value})} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Expiration</label>
+                <input type="date" value={form.expires_at}
+                  onChange={e => setForm({...form, expires_at: e.target.value})} className={inputCls} />
+              </div>
+            </div>
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked={form.is_active}
+                onChange={e => setForm({...form, is_active: e.target.checked})}
+                className="w-4 h-4 rounded accent-purple-600" />
+              <span className="text-sm font-medium text-slate-700">Coupon actif</span>
+            </label>
+            <div className="flex gap-3">
+              <button type="submit" disabled={submitting}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition">
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {editingId ? 'Mettre à jour' : 'Créer'}
+              </button>
+              <button type="button" onClick={resetForm}
+                className="px-5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50 transition">
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left px-6 py-3 font-medium text-gray-500">Code</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-500">Type</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-500">Valeur</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-500">Utilisations</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-500">Expire le</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-500">Actif</th>
-                <th className="text-right px-6 py-3 font-medium text-gray-500">Actions</th>
+            <thead>
+              <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                <th className="text-left px-5 py-3.5">Code</th>
+                <th className="text-left px-5 py-3.5">Type</th>
+                <th className="text-left px-5 py-3.5">Valeur</th>
+                <th className="text-left px-5 py-3.5">Utilisations</th>
+                <th className="text-left px-5 py-3.5">Expire le</th>
+                <th className="text-left px-5 py-3.5">Statut</th>
+                <th className="text-right px-5 py-3.5">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr><td colSpan={7} className="py-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600" /></td></tr>
+                <tr><td colSpan={7} className="py-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-purple-600" /></td></tr>
               ) : coupons.length === 0 ? (
-                <tr><td colSpan={7} className="py-8 text-center text-gray-500">Aucun coupon</td></tr>
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <Ticket className="h-10 w-10 text-slate-200 mx-auto mb-2" />
+                    <p className="text-slate-400 text-sm">Aucun coupon</p>
+                  </td>
+                </tr>
               ) : (
                 coupons.map(coupon => (
-                  <tr key={coupon.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-mono font-bold text-blue-600">{coupon.code}</td>
-                    <td className="px-6 py-4">{coupon.type === 'fixed' ? 'Fixe' : 'Pourcentage'}</td>
-                    <td className="px-6 py-4 font-medium">{coupon.type === 'fixed' ? formatPrice(coupon.discount) : `${coupon.discount}%`}</td>
-                    <td className="px-6 py-4">{coupon.used_count || 0}{coupon.max_uses ? `/${coupon.max_uses}` : ''}</td>
-                    <td className="px-6 py-4 text-xs text-gray-500">{coupon.expires_at ? formatDate(coupon.expires_at) : '-'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs ${coupon.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  <tr key={coupon.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-5 py-4 font-mono font-bold text-purple-600">{coupon.code}</td>
+                    <td className="px-5 py-4 text-slate-600">{coupon.type === 'fixed' ? 'Fixe' : 'Pourcentage'}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-900">
+                      {coupon.type === 'fixed' ? formatPrice(coupon.discount) : `${coupon.discount}%`}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {coupon.used_count || 0}{coupon.max_uses ? `/${coupon.max_uses}` : ''}
+                    </td>
+                    <td className="px-5 py-4 text-slate-400 text-xs">
+                      {coupon.expires_at ? formatDate(coupon.expires_at) : '—'}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        coupon.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                      }`}>
                         {coupon.is_active ? 'Actif' : 'Inactif'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEdit(coupon)} className="text-blue-600 hover:text-blue-800 p-1"><Pencil className="h-4 w-4" /></button>
-                        <button onClick={() => handleDelete(coupon.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="h-4 w-4" /></button>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => handleEdit(coupon)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleDelete(coupon.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -199,15 +243,23 @@ export default function DashboardCouponsPage() {
             </tbody>
           </table>
         </div>
-      </div>
 
-      {lastPage > 1 && (
-        <div className="flex justify-center gap-2">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50">Précédent</button>
-          <span className="px-4 py-2 text-sm text-gray-600">Page {page} / {lastPage}</span>
-          <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50">Suivant</button>
-        </div>
-      )}
+        {lastPage > 1 && (
+          <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
+            <p className="text-sm text-slate-400">Page {page} / {lastPage}</p>
+            <div className="flex gap-2">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="p-2 border-2 border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button onClick={() => setPage(p => Math.min(lastPage, p + 1))} disabled={page === lastPage}
+                className="p-2 border-2 border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
