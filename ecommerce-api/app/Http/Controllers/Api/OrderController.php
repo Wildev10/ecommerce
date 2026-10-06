@@ -84,7 +84,7 @@ class OrderController extends Controller
         // Vérifier le stock de chaque produit
         foreach ($cartItems as $item) {
             if (!$item->product || !$item->product->is_active) {
-                return $this->error("Le produit '{$item->product->name}' n'est plus disponible", 400);
+                return $this->error("Un produit de votre panier n'est plus disponible", 400);
             }
             if ($item->quantity > $item->product->stock) {
                 return $this->error(
