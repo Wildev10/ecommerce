@@ -97,19 +97,13 @@ class OrderController extends Controller
         // Calculer le sous-total
         $subtotal = $cartItems->sum(fn ($item) => $item->quantity * $item->product->price);
 
-        // Coupon
-        $discount = 0;
-        $couponId = null;
-
-        if ($request->coupon_code) {
-            $coupon = Coupon::where('code', $request->coupon_code)->first();
-
-            if (!$coupon || !$coupon->isValid()) {
+        // Coupon — validation rapide hors transaction (early return si code invalide)
+        $couponCode = $request->coupon_code;
+        if ($couponCode) {
+            $earlyCheck = Coupon::where('code', $couponCode)->first();
+            if (!$earlyCheck || !$earlyCheck->isValid()) {
                 return $this->error('Code promo invalide ou expiré', 400);
             }
-
-            $discount = $coupon->calculateDiscount($subtotal);
-            $couponId = $coupon->id;
         }
 
         // Frais de livraison basés sur les zones des vendeurs
@@ -131,13 +125,11 @@ class OrderController extends Controller
             }
         }
 
-        $total = $subtotal - $discount + $shippingFee;
-
         // Créer la commande dans une transaction
         try {
         $order = DB::transaction(function () use (
-            $user, $cart, $cartItems, $subtotal, $discount, $shippingFee, $total,
-            $couponId, $request
+            $user, $cart, $cartItems, $subtotal, $shippingFee,
+            $couponCode, $request
         ) {
             // Verrouillage des lignes produits pour éviter la race condition sur le stock
             $productIds  = $cartItems->pluck('product_id')->toArray();
@@ -151,6 +143,21 @@ class OrderController extends Controller
                     );
                 }
             }
+
+            // Validation finale du coupon avec verrou pour éviter la race condition sur max_uses
+            $discount = 0;
+            $couponId = null;
+            $lockedCoupon = null;
+            if ($couponCode) {
+                $lockedCoupon = Coupon::where('code', $couponCode)->lockForUpdate()->first();
+                if (!$lockedCoupon || !$lockedCoupon->isValid()) {
+                    throw new \RuntimeException('Code promo invalide ou expiré');
+                }
+                $discount = $lockedCoupon->calculateDiscount($subtotal);
+                $couponId = $lockedCoupon->id;
+            }
+
+            $total = $subtotal - $discount + $shippingFee;
 
             $order = Order::create([
                 'user_id'        => $user->id,
@@ -180,8 +187,8 @@ class OrderController extends Controller
                 $item->product->decrement('stock', $item->quantity);
             }
 
-            if ($couponId) {
-                Coupon::where('id', $couponId)->increment('used_count');
+            if ($lockedCoupon) {
+                $lockedCoupon->increment('used_count');
             }
 
             $order->statusHistory()->create([
