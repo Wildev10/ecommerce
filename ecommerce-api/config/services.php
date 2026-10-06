@@ -27,6 +27,7 @@ return [
         'env'            => env('FEDAPAY_ENV', 'sandbox'),
         'webhook_url'    => env('FEDAPAY_WEBHOOK_URL', env('APP_URL') . '/api/webhooks/fedapay'),
         'webhook_secret' => env('FEDAPAY_WEBHOOK_SECRET'),
+        'return_url'     => env('FEDAPAY_RETURN_URL', env('FRONTEND_URL', 'http://localhost:3000') . '/payment/callback'),
     ],
 
     'ses' => [

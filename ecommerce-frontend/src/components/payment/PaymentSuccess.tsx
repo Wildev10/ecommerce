@@ -39,7 +39,10 @@ export default function PaymentSuccess({ transactionId, orderId, amount, method 
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Méthode</span>
             <span className="font-medium text-gray-900">
-              {method === 'mtn_momo' ? 'MTN MoMo' : 'Moov Money'}
+              {method === 'mtn_momo' ? 'MTN MoMo' :
+               method === 'moov_money' ? 'Moov Money' :
+               method === 'cash_on_delivery' ? 'Paiement à la livraison' :
+               method}
             </span>
           </div>
           <div className="flex justify-between text-sm">
