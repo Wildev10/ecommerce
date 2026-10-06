@@ -181,7 +181,7 @@ function LoginContent() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
                 >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {errors.password && <p className="text-red-500 text-xs mt-1.5">⚠ {errors.password}</p>}
@@ -194,9 +194,9 @@ function LoginContent() {
               className="w-full flex items-center justify-center gap-2 py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
               {loading ? (
-                <><Loader2 className="animate-spin h-4.5 w-4.5" /> Connexion en cours…</>
+                <><Loader2 className="animate-spin h-4 w-4" /> Connexion en cours…</>
               ) : (
-                <><LogIn className="h-4.5 w-4.5" /> Se connecter</>
+                <><LogIn className="h-4 w-4" /> Se connecter</>
               )}
             </button>
 

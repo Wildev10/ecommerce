@@ -162,7 +162,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
                         <CheckCircle2 className="h-4 w-4 text-blue-600" />
                       </div>
-                      {idx < order.status_history.length - 1 && (
+                      {idx < order.status_history!.length - 1 && (
                         <div className="w-0.5 h-8 bg-slate-100 my-1" />
                       )}
                     </div>

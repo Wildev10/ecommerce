@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { sellerApi } from '@/lib/api';
 import { formatPrice, formatDate, orderStatusLabels, orderStatusColors, extractErrorMessage } from '@/lib/api-helpers';
-import { Loader2, Eye, Package, MapPin, Phone, User } from 'lucide-react';
+import { Loader2, Package, MapPin, Phone, User, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Order, PaginationMeta } from '@/types';
 import toast from 'react-hot-toast';
 
 const STATUS_FILTERS = [
-  { value: '', label: 'Tous' },
+  { value: '', label: 'Toutes' },
   { value: 'pending', label: 'En attente' },
   { value: 'confirmed', label: 'Confirmées' },
   { value: 'processing', label: 'En préparation' },
@@ -42,11 +42,8 @@ export default function SellerOrdersPage() {
       const data = await sellerApi.getOrders({ page, per_page: 20, status: statusFilter || undefined });
       setOrders(data.data);
       setMeta(data.meta);
-    } catch {
-      toast.error('Erreur de chargement');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Erreur de chargement'); }
+    finally { setLoading(false); }
   };
 
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
@@ -70,22 +67,27 @@ export default function SellerOrdersPage() {
     try {
       const order = await sellerApi.getOrder(orderId);
       setSelectedOrder(order);
-    } catch {
-      toast.error('Erreur de chargement');
-    }
+    } catch { toast.error('Erreur de chargement'); }
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Commandes reçues</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-900">Commandes reçues</h1>
+        {meta && <p className="text-sm text-slate-400 mt-0.5">{meta.total} commande{meta.total > 1 ? 's' : ''}</p>}
+      </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Filter tabs */}
+      <div className="flex flex-wrap gap-2 mb-5">
         {STATUS_FILTERS.map((filter) => (
           <button
             key={filter.value}
             onClick={() => { setStatusFilter(filter.value); setPage(1); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${statusFilter === filter.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+              statusFilter === filter.value
+                ? 'bg-orange-500 text-white shadow-sm'
+                : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            }`}
           >
             {filter.label}
           </button>
@@ -93,50 +95,55 @@ export default function SellerOrdersPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl">
-          <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Aucune commande</h2>
-          <p className="text-gray-500">Vous n&apos;avez pas encore reçu de commandes</p>
+        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+          <Package className="h-14 w-14 text-slate-200 mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-slate-900 mb-2">Aucune commande</h2>
+          <p className="text-slate-400 text-sm">Vous n&apos;avez pas encore reçu de commandes</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr className="text-left text-sm text-gray-500">
-                  <th className="px-6 py-3 font-medium">Commande</th>
-                  <th className="px-6 py-3 font-medium">Client</th>
-                  <th className="px-6 py-3 font-medium">Total</th>
-                  <th className="px-6 py-3 font-medium">Statut</th>
-                  <th className="px-6 py-3 font-medium">Date</th>
-                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+              <thead>
+                <tr className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                  <th className="px-5 py-3.5">Commande</th>
+                  <th className="px-5 py-3.5">Client</th>
+                  <th className="px-5 py-3.5">Total</th>
+                  <th className="px-5 py-3.5">Statut</th>
+                  <th className="px-5 py-3.5">Date</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-50">
                 {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-900 text-sm">#{order.order_number}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{order.user?.name || 'Client'}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatPrice(order.total)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${orderStatusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
+                  <tr key={order.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-5 py-4 font-bold text-slate-900 text-sm">#{order.order_number}</td>
+                    <td className="px-5 py-4 text-sm text-slate-600">{order.user?.name || 'Client'}</td>
+                    <td className="px-5 py-4 text-sm font-bold text-slate-900">{formatPrice(order.total)}</td>
+                    <td className="px-5 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${orderStatusColors[order.status] || 'bg-slate-100 text-slate-700'}`}>
                         {orderStatusLabels[order.status] || order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(order.created_at)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => viewOrderDetail(order.id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
-                          <Eye className="h-4 w-4" />
+                    <td className="px-5 py-4 text-xs text-slate-400">{formatDate(order.created_at)}</td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => viewOrderDetail(order.id)}
+                          className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition"
+                        >
+                          Voir
                         </button>
                         {ALLOWED_TRANSITIONS[order.status]?.map((nextStatus) => (
                           <button
                             key={nextStatus}
                             onClick={() => handleStatusUpdate(order.id, nextStatus)}
                             disabled={updatingStatus === order.id}
-                            className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 rounded-xl disabled:opacity-50 transition"
                           >
                             {updatingStatus === order.id ? '...' : orderStatusLabels[nextStatus]}
                           </button>
@@ -150,71 +157,93 @@ export default function SellerOrdersPage() {
           </div>
 
           {meta && meta.last_page > 1 && (
-            <div className="flex justify-center space-x-2 p-4 border-t">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 border rounded text-sm disabled:opacity-50">Précédent</button>
-              <span className="px-3 py-1 text-sm text-gray-600">Page {meta.current_page} / {meta.last_page}</span>
-              <button onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))} disabled={page === meta.last_page} className="px-3 py-1 border rounded text-sm disabled:opacity-50">Suivant</button>
+            <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100">
+              <p className="text-sm text-slate-400">Page {meta.current_page} / {meta.last_page}</p>
+              <div className="flex gap-2">
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 border-2 border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))} disabled={page === meta.last_page} className="p-2 border-2 border-slate-200 rounded-xl disabled:opacity-40 hover:bg-slate-50 transition">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Order Detail Modal */}
+      {/* Order detail modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-bold text-gray-900">Commande #{selectedOrder.order_number}</h2>
-              <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500">×</button>
-            </div>
-            <div className="p-6 space-y-6">
-              {/* Client info */}
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2"><User className="h-4 w-4" /> Client</h3>
-                <p className="text-sm text-gray-600">{selectedOrder.user?.name} — {selectedOrder.user?.email}</p>
+                <h2 className="text-base font-bold text-slate-900">Commande #{selectedOrder.order_number}</h2>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full mt-1 inline-block ${orderStatusColors[selectedOrder.status] || 'bg-slate-100 text-slate-700'}`}>
+                  {orderStatusLabels[selectedOrder.status] || selectedOrder.status}
+                </span>
+              </div>
+              <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-slate-100 rounded-xl transition">
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Client */}
+              <div className="bg-slate-50 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <User className="h-4 w-4" /> Client
+                </h3>
+                <p className="text-sm text-slate-700 font-medium">{selectedOrder.user?.name}</p>
+                <p className="text-xs text-slate-500">{selectedOrder.user?.email}</p>
               </div>
 
               {/* Address */}
               {selectedOrder.address && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2"><MapPin className="h-4 w-4" /> Adresse de livraison</h3>
-                  <div className="text-sm text-gray-600">
-                    <p>{selectedOrder.address.full_name}</p>
-                    <p>{selectedOrder.address.street_address}, {selectedOrder.address.quarter}, {selectedOrder.address.city}</p>
-                    <p className="flex items-center gap-1"><Phone className="h-3 w-3" /> {selectedOrder.address.phone}</p>
-                  </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> Adresse de livraison
+                  </h3>
+                  <p className="text-sm font-medium text-slate-700">{selectedOrder.address.full_name}</p>
+                  <p className="text-sm text-slate-500">{selectedOrder.address.street_address}, {selectedOrder.address.quarter}, {selectedOrder.address.city}</p>
+                  <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
+                    <Phone className="h-3 w-3" /> {selectedOrder.address.phone}
+                  </p>
                 </div>
               )}
 
               {/* Items */}
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Articles</h3>
-                <div className="divide-y">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Articles</h3>
+                <div className="divide-y divide-slate-100">
                   {selectedOrder.items?.map((item) => (
-                    <div key={item.id} className="py-2 flex justify-between text-sm">
-                      <span className="text-gray-600">{item.product_name} × {item.quantity}</span>
-                      <span className="font-medium">{formatPrice(item.total)}</span>
+                    <div key={item.id} className="py-2.5 flex justify-between text-sm">
+                      <span className="text-slate-600">{item.product_name} × {item.quantity}</span>
+                      <span className="font-semibold text-slate-800">{formatPrice(item.total)}</span>
                     </div>
                   ))}
                 </div>
-                <div className="border-t pt-2 mt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-blue-600">{formatPrice(selectedOrder.total)}</span>
+                <div className="border-t border-slate-100 pt-3 mt-2 flex justify-between">
+                  <span className="font-bold text-slate-900">Total</span>
+                  <span className="font-bold text-orange-600 text-lg">{formatPrice(selectedOrder.total)}</span>
                 </div>
               </div>
 
               {/* Status update */}
               {ALLOWED_TRANSITIONS[selectedOrder.status] && (
-                <div className="flex gap-2">
-                  {ALLOWED_TRANSITIONS[selectedOrder.status].map((nextStatus) => (
-                    <button
-                      key={nextStatus}
-                      onClick={() => handleStatusUpdate(selectedOrder.id, nextStatus)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
-                    >
-                      Passer à : {orderStatusLabels[nextStatus]}
-                    </button>
-                  ))}
+                <div className="pt-2 border-t border-slate-100">
+                  <p className="text-sm font-semibold text-slate-700 mb-3">Avancer le statut :</p>
+                  <div className="flex flex-wrap gap-2">
+                    {ALLOWED_TRANSITIONS[selectedOrder.status].map((nextStatus) => (
+                      <button
+                        key={nextStatus}
+                        onClick={() => handleStatusUpdate(selectedOrder.id, nextStatus)}
+                        className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition"
+                      >
+                        Passer à : {orderStatusLabels[nextStatus]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
