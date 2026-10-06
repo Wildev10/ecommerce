@@ -735,8 +735,9 @@ export const deliveryApi = {
 // ============================================
 export const shopApi = {
   getBySlug: async (slug: string) => {
-    const res = await axios.get<ApiResponse<Shop & { products: Product[] }>>(`/shops/${slug}`);
-    return res.data.data;
+    const res = await axios.get<ApiResponse<{ shop: Shop; products: { data: Product[] } }>>(`/shops/${slug}`);
+    const { shop, products } = res.data.data;
+    return { ...shop, products: products?.data ?? [] } as Shop & { products: Product[] };
   },
 };
 
