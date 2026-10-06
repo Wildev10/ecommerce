@@ -4,19 +4,113 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, SlidersHorizontal, X, ShoppingCart, Star, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import {
+  Search,
+  X,
+  ShoppingCart,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  SlidersHorizontal,
+  ShoppingBag,
+} from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
-import Loading from '@/components/ui/loading';
 import type { Product, Category, PaginationMeta } from '@/types';
 import toast from 'react-hot-toast';
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+    <Suspense fallback={
+      <div className="flex justify-center items-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
       <ProductsContent />
     </Suspense>
+  );
+}
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`h-3 w-3 ${i <= Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200 fill-slate-200'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (p: Product) => void }) {
+  const discount = product.compare_price && product.compare_price > product.price
+    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+    : null;
+
+  return (
+    <div className="product-card bg-white rounded-2xl border border-slate-100 overflow-hidden group flex flex-col">
+      <Link href={`/products/${product.slug || product.id}`} className="block relative">
+        <div className="aspect-square bg-slate-50 relative overflow-hidden">
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingBag className="h-14 w-14 text-slate-200" />
+            </div>
+          )}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {discount && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{discount}%</span>
+            )}
+            {product.stock === 0 && (
+              <span className="bg-slate-800/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">Rupture</span>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      <div className="p-4 flex flex-col flex-1">
+        <Link href={`/products/${product.slug || product.id}`}>
+          <h3 className="font-semibold text-slate-800 text-sm line-clamp-2 mb-1.5 hover:text-blue-700 transition leading-snug">
+            {product.name}
+          </h3>
+        </Link>
+
+        {product.reviews_avg_rating !== undefined && Number(product.reviews_avg_rating) > 0 && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <StarRating rating={Number(product.reviews_avg_rating)} />
+            <span className="text-xs text-slate-400">({Number(product.reviews_avg_rating).toFixed(1)})</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mt-auto pt-2">
+          <div>
+            <p className="font-bold text-blue-700 text-base">{formatPrice(product.price)}</p>
+            {product.compare_price && product.compare_price > product.price && (
+              <p className="text-xs text-slate-400 line-through">{formatPrice(product.compare_price)}</p>
+            )}
+          </div>
+          <button
+            onClick={() => onAddToCart(product)}
+            disabled={product.stock === 0}
+            className="p-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Ajouter au panier"
+          >
+            <ShoppingCart className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -29,7 +123,7 @@ function ProductsContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const currentPage = Number(searchParams.get('page')) || 1;
   const currentSearch = searchParams.get('search') || '';
@@ -50,7 +144,6 @@ function ProductsContent() {
       if (currentCategory) params.category = currentCategory;
       if (currentMinPrice) params.min_price = Number(currentMinPrice);
       if (currentMaxPrice) params.max_price = Number(currentMaxPrice);
-
       const res = await productsApi.getAll(params);
       setProducts(res.data ?? []);
       setMeta(res.meta ?? null);
@@ -85,122 +178,223 @@ function ProductsContent() {
     toast.success(`${product.name} ajouté au panier`);
   };
 
+  const hasActiveFilters = !!(currentCategory || currentMinPrice || currentMaxPrice || currentSearch);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Nos Produits</h1>
-        <div className="flex items-center gap-3">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="pl-10 pr-4 py-2 border rounded-lg w-64 text-sm" />
-          </form>
-          <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
-            <SlidersHorizontal className="h-4 w-4" /> Filtres
-          </button>
-        </div>
+
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Nos produits</h1>
+        {meta && (
+          <p className="text-sm text-slate-500 mt-1">{meta.total ?? products.length} résultat{(meta.total ?? products.length) > 1 ? 's' : ''}</p>
+        )}
       </div>
 
-      {showFilters && (
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
-            <select value={currentCategory} onChange={(e) => updateFilters({ category: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="">Toutes</option>
-              {categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
-            </select>
+      <div className="flex gap-8">
+
+        {/* ── SIDEBAR FILTERS ── */}
+        <aside className={`
+          shrink-0 w-60 space-y-6
+          ${sidebarOpen ? 'fixed inset-0 z-50 bg-white p-6 overflow-y-auto lg:relative lg:inset-auto lg:bg-transparent lg:p-0' : 'hidden lg:block'}
+        `}>
+          {/* Mobile close */}
+          <div className="flex items-center justify-between lg:hidden mb-2">
+            <h2 className="font-bold text-slate-900 text-lg">Filtres</h2>
+            <button onClick={() => setSidebarOpen(false)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Prix min</label>
-            <input type="number" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} onBlur={() => updateFilters({ min_price: minPrice })} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="0" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Prix max</label>
-            <input type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} onBlur={() => updateFilters({ max_price: maxPrice })} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1000000" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Trier par</label>
-            <select value={currentSort} onChange={(e) => updateFilters({ sort: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
-              <option value="newest">Plus récent</option>
-              <option value="price_asc">Prix croissant</option>
-              <option value="price_desc">Prix décroissant</option>
-              <option value="popular">Populaire</option>
-            </select>
-          </div>
-          {(currentCategory || currentMinPrice || currentMaxPrice || currentSearch) && (
-            <button onClick={() => { setSearch(''); setMinPrice(''); setMaxPrice(''); router.push('/products'); }} className="text-sm text-red-600 hover:underline flex items-center gap-1">
-              <X className="h-3 w-3" /> Réinitialiser
+
+          {hasActiveFilters && (
+            <button
+              onClick={() => { setSearch(''); setMinPrice(''); setMaxPrice(''); router.push('/products'); setSidebarOpen(false); }}
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-sm text-red-600 hover:bg-red-50 border border-red-200 rounded-xl transition font-medium"
+            >
+              <X className="h-3.5 w-3.5" /> Effacer les filtres
             </button>
           )}
-        </div>
-      )}
 
-      {loading ? (
-        <Loading text="Chargement des produits..." />
-      ) : products.length === 0 ? (
-        <div className="text-center py-16">
-          <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Aucun produit trouvé</h2>
-          <p className="text-gray-500">Essayez de modifier vos filtres</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
-                <Link href={`/products/${product.slug || product.id}`} className="block">
-                  <div className="aspect-square bg-gray-100 relative">
-                    {product.image_url ? (
-                      <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <ShoppingCart className="h-12 w-12" />
-                      </div>
-                    )}
-                    {product.stock === 0 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">Rupture</span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-                <div className="p-4">
-                  <Link href={`/products/${product.slug || product.id}`}>
-                    <h3 className="font-medium text-gray-900 mb-1 truncate hover:text-blue-600">{product.name}</h3>
-                  </Link>
-                  {product.reviews_avg_rating !== undefined && product.reviews_avg_rating > 0 && (
-                    <div className="flex items-center gap-1 mb-2">
-                      <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs text-gray-500">{product.reviews_avg_rating.toFixed(1)}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-blue-600">{formatPrice(product.price)}</span>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      disabled={product.stock === 0}
-                      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+          {/* Search */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Recherche</h3>
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Mot-clé..."
+                  className="w-full pl-9 pr-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition"
+                />
               </div>
-            ))}
+            </form>
           </div>
 
-          {meta && meta.last_page > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <button onClick={() => updateFilters({ page: String(currentPage - 1) })} disabled={currentPage === 1} className="p-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50">
-                <ChevronLeft className="h-5 w-5" />
+          {/* Categories */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Catégorie</h3>
+            <div className="space-y-1">
+              <button
+                onClick={() => updateFilters({ category: '' })}
+                className={`w-full text-left px-3 py-2 text-sm rounded-xl transition font-medium ${!currentCategory ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+              >
+                Toutes les catégories
               </button>
-              <span className="px-4 py-2 text-sm text-gray-600">Page {meta.current_page} / {meta.last_page}</span>
-              <button onClick={() => updateFilters({ page: String(currentPage + 1) })} disabled={currentPage === meta.last_page} className="p-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50">
-                <ChevronRight className="h-5 w-5" />
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => { updateFilters({ category: cat.slug }); setSidebarOpen(false); }}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-xl transition ${currentCategory === cat.slug ? 'bg-blue-700 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price range */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Prix (FCFA)</h3>
+            <div className="space-y-2">
+              <input
+                type="number"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                onBlur={() => updateFilters({ min_price: minPrice })}
+                placeholder="Min"
+                className="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition"
+              />
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                onBlur={() => updateFilters({ max_price: maxPrice })}
+                placeholder="Max"
+                className="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition"
+              />
+            </div>
+          </div>
+
+          {/* Sort */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Trier par</h3>
+            <div className="space-y-1">
+              {[
+                { value: 'newest', label: 'Plus récents' },
+                { value: 'price_asc', label: 'Prix croissant' },
+                { value: 'price_desc', label: 'Prix décroissant' },
+                { value: 'popular', label: 'Populaires' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updateFilters({ sort: opt.value })}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-xl transition ${currentSort === opt.value ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* Overlay mobile sidebar */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
+
+        {/* ── MAIN CONTENT ── */}
+        <div className="flex-1 min-w-0">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-4 mb-5 p-3 bg-white rounded-xl border border-slate-100">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-blue-700 lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtres {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-orange-500" />}
+            </button>
+            <div className="hidden lg:flex items-center gap-2 text-sm text-slate-500">
+              {hasActiveFilters && (
+                <button onClick={() => { setSearch(''); setMinPrice(''); setMaxPrice(''); router.push('/products'); }} className="flex items-center gap-1 text-red-500 hover:text-red-700 font-medium">
+                  <X className="h-3.5 w-3.5" /> Effacer
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-slate-400 hidden sm:inline">Trier :</span>
+              <select
+                value={currentSort}
+                onChange={(e) => updateFilters({ sort: e.target.value })}
+                className="text-sm border-2 border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 bg-white"
+              >
+                <option value="newest">Plus récents</option>
+                <option value="price_asc">Prix ↑</option>
+                <option value="price_desc">Prix ↓</option>
+                <option value="popular">Populaires</option>
+              </select>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-24">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-24 bg-white rounded-2xl border border-slate-100">
+              <ShoppingBag className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">Aucun produit trouvé</h2>
+              <p className="text-slate-500 text-sm mb-6">Essayez de modifier vos filtres</p>
+              <button onClick={() => router.push('/products')} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl text-sm font-medium hover:bg-blue-800 transition">
+                Voir tous les produits
               </button>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {meta && meta.last_page > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                  <button
+                    onClick={() => updateFilters({ page: String(currentPage - 1) })}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1.5 px-4 py-2 border-2 border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:border-blue-500 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Précédent
+                  </button>
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(meta.last_page, 5) }, (_, i) => {
+                      const page = i + 1;
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => updateFilters({ page: String(page) })}
+                          className={`w-9 h-9 rounded-xl text-sm font-medium transition ${currentPage === page ? 'bg-blue-700 text-white' : 'border-2 border-slate-200 text-slate-700 hover:border-blue-400'}`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => updateFilters({ page: String(currentPage + 1) })}
+                    disabled={currentPage === meta.last_page}
+                    className="flex items-center gap-1.5 px-4 py-2 border-2 border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:border-blue-500 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Suivant <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
