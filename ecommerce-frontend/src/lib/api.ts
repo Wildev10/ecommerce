@@ -26,6 +26,7 @@ import type {
   Withdrawal,
   ReviewReply,
   ShippingZone,
+  DeliveryDashboard,
 } from '@/types';
 
 // ============================================
@@ -704,13 +705,7 @@ export const sellerApi = {
 // ============================================
 export const deliveryApi = {
   getDashboard: async () => {
-    const res = await axios.get<ApiResponse<{
-      assigned_orders: number;
-      delivered_orders: number;
-      in_progress_orders: number;
-      total_deliveries: number;
-      recent_orders: Order[];
-    }>>('/delivery/dashboard');
+    const res = await axios.get<ApiResponse<DeliveryDashboard>>('/delivery/dashboard');
     return res.data.data;
   },
 
