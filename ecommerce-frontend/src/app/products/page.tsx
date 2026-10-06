@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, SlidersHorizontal, X, ShoppingCart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ShoppingCart, Star, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
@@ -13,6 +13,14 @@ import type { Product, Category, PaginationMeta } from '@/types';
 import toast from 'react-hot-toast';
 
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+      <ProductsContent />
+    </Suspense>
+  );
+}
+
+function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
