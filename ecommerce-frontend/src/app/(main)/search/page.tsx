@@ -13,7 +13,11 @@ import toast from 'react-hot-toast';
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+    <Suspense fallback={
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
       <SearchContent />
     </Suspense>
   );
@@ -31,6 +35,7 @@ function SearchContent() {
   const [suggestions, setSuggestions] = useState<Array<{ id: number; name: string; slug: string; price: number; image: string | null }>>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (q) {
@@ -58,6 +63,7 @@ function SearchContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    setShowSuggestions(false);
     router.push(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
@@ -73,13 +79,13 @@ function SearchContent() {
     toast.success('Ajouté au panier');
   };
 
-  // Debounced suggestions
   useEffect(() => {
     if (query.length < 2) { setSuggestions([]); return; }
     const timer = setTimeout(async () => {
       try {
         const res = await searchApi.suggestions(query);
         setSuggestions(res.products || []);
+        setShowSuggestions(true);
       } catch {
         setSuggestions([]);
       }
@@ -89,63 +95,73 @@ function SearchContent() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-8 relative">
-        <div className="flex">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher un produit, une catégorie..."
-              className="w-full pl-12 pr-4 py-4 text-lg border border-gray-300 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              autoFocus
-            />
+      {/* Search bar */}
+      <div className="max-w-2xl mx-auto mb-10">
+        <form onSubmit={handleSubmit} className="relative">
+          <div className="flex gap-0">
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="Rechercher un produit, une catégorie..."
+                className="w-full pl-12 pr-4 py-4 text-base border-2 border-slate-200 border-r-0 rounded-l-2xl focus:outline-none focus:border-blue-500 transition"
+                autoFocus
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-7 bg-blue-600 hover:bg-blue-700 text-white rounded-r-2xl font-semibold text-sm transition"
+            >
+              Rechercher
+            </button>
           </div>
-          <button type="submit" className="px-8 bg-blue-600 text-white rounded-r-xl hover:bg-blue-700 font-medium">
-            Rechercher
-          </button>
-        </div>
 
-        {/* Suggestions dropdown */}
-        {suggestions.length > 0 && (
-          <div className="absolute z-10 top-full left-0 right-0 bg-white border rounded-lg shadow-lg mt-1">
-            {suggestions.map((s, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setQuery(s.name);
-                  setSuggestions([]);
-                  router.push(`/search?q=${encodeURIComponent(s.name)}`);
-                }}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-50 text-sm"
-              >
-                {s.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </form>
+          {/* Suggestions */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-20 top-full left-0 right-0 bg-white border-2 border-slate-200 rounded-2xl shadow-lg mt-2 overflow-hidden">
+              {suggestions.map((s, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onMouseDown={() => {
+                    setQuery(s.name);
+                    setShowSuggestions(false);
+                    router.push(`/search?q=${encodeURIComponent(s.name)}`);
+                  }}
+                  className="flex items-center gap-3 w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-50 last:border-0"
+                >
+                  <SearchIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </form>
+      </div>
 
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-slate-500 text-sm">Recherche en cours...</p>
         </div>
       ) : searched ? (
-        <div>
+        <div className="space-y-8">
           {/* Categories */}
           {categories.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-                <Tag className="h-5 w-5 text-blue-600" /> Catégories
+            <div>
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
+                <Tag className="h-4 w-4 text-blue-600" /> Catégories correspondantes
               </h2>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2.5">
                 {categories.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/categories/${cat.slug}`}
-                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 text-sm font-medium"
+                    className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-full text-sm font-semibold transition"
                   >
                     {cat.name}
                   </Link>
@@ -155,63 +171,81 @@ function SearchContent() {
           )}
 
           {/* Products */}
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            {products.length > 0
-              ? `${products.length} résultat${products.length > 1 ? 's' : ''} pour "${q}"`
-              : `Aucun résultat pour "${q}"`}
-          </h2>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 mb-5">
+              {products.length > 0
+                ? `${products.length} résultat${products.length > 1 ? 's' : ''} pour « ${q} »`
+                : `Aucun résultat pour « ${q} »`}
+            </h2>
 
-          {products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
-                  <Link href={`/products/${product.slug}`}>
-                    <div className="aspect-square bg-gray-100 relative overflow-hidden">
-                      {product.image_url ? (
-                        <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <ShoppingCart className="h-12 w-12" />
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                  <div className="p-4">
+            {products.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {products.map((product) => (
+                  <div key={product.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden group hover:shadow-md transition-shadow">
                     <Link href={`/products/${product.slug}`}>
-                      <h3 className="font-medium text-gray-900 truncate hover:text-blue-600">{product.name}</h3>
+                      <div className="aspect-square bg-slate-100 relative overflow-hidden">
+                        {product.image_url ? (
+                          <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <ShoppingCart className="h-10 w-10" />
+                          </div>
+                        )}
+                        {product.compare_price && product.compare_price > product.price && (
+                          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            -{Math.round((1 - product.price / product.compare_price) * 100)}%
+                          </span>
+                        )}
+                      </div>
                     </Link>
-                    {product.category && (
-                      <p className="text-xs text-gray-500 mt-1">{product.category.name}</p>
-                    )}
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs text-gray-600">{product.reviews_avg_rating || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-lg font-bold text-blue-600">{formatPrice(product.price)}</span>
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        disabled={product.stock <= 0}
-                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        <ShoppingCart className="h-4 w-4" />
-                      </button>
+                    <div className="p-4">
+                      <Link href={`/products/${product.slug}`}>
+                        <h3 className="font-semibold text-slate-900 truncate hover:text-blue-600 transition text-sm">{product.name}</h3>
+                      </Link>
+                      {product.category && (
+                        <p className="text-xs text-slate-400 mt-0.5">{product.category.name}</p>
+                      )}
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        <span className="text-xs text-slate-500">{product.reviews_avg_rating || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <div>
+                          <span className="text-base font-bold text-blue-600">{formatPrice(product.price)}</span>
+                          {product.compare_price && product.compare_price > product.price && (
+                            <span className="text-xs text-slate-400 line-through ml-1.5">{formatPrice(product.compare_price)}</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleAddToCart(product)}
+                          disabled={product.stock <= 0}
+                          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-40 transition"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <SearchIcon className="h-8 w-8 text-slate-300" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <SearchIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Essayez avec d&apos;autres termes de recherche</p>
-            </div>
-          )}
+                <p className="text-slate-500 font-medium">Aucun produit trouvé</p>
+                <p className="text-slate-400 text-sm mt-1">Essayez avec d&apos;autres termes de recherche</p>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="text-center py-16">
-          <SearchIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Tapez votre recherche pour trouver des produits</p>
+        <div className="text-center py-20">
+          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <SearchIcon className="h-10 w-10 text-blue-300" />
+          </div>
+          <p className="text-slate-600 font-medium">Que recherchez-vous ?</p>
+          <p className="text-slate-400 text-sm mt-1">Tapez votre recherche pour trouver des produits</p>
         </div>
       )}
     </div>
