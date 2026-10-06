@@ -126,10 +126,14 @@ class WalletController extends Controller
             'processed_at'   => now(),
         ]);
 
-        // If rejected, refund the wallet
+        $wallet = $withdrawal->user->getOrCreateWallet();
+
         if ($request->status === 'rejected') {
-            $wallet = $withdrawal->user->getOrCreateWallet();
+            // Refund reserved funds to available balance
             $wallet->increment('balance', $withdrawal->amount);
+        } else {
+            // Withdrawal completed — record the amount in total_withdrawn
+            $wallet->increment('total_withdrawn', $withdrawal->amount);
         }
 
         $withdrawal->load('user:id,name,email');
