@@ -7,7 +7,7 @@ import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';
 import type { User, Shop, PaginationMeta } from '@/types';
 
-type SellerWithShop = User & { shop?: Shop; seller_status?: string };
+type SellerWithShop = User & { shop?: Shop };
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending:  { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },

@@ -46,6 +46,7 @@ export interface User {
   avatar_url: string | null;
   is_active: boolean;
   email_verified_at: string | null;
+  seller_status: 'pending' | 'approved' | 'rejected' | 'banned' | null;
   created_at: string;
   updated_at: string;
 }
