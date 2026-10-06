@@ -106,7 +106,7 @@ function ProductsContent() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
             <select value={currentCategory} onChange={(e) => updateFilters({ category: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="">Toutes</option>
-              {categories.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+              {categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
             </select>
           </div>
           <div>
