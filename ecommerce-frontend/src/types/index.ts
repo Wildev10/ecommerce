@@ -402,7 +402,7 @@ export interface Shop {
 // ============================================
 // Commission
 // ============================================
-export type CommissionStatus = 'pending' | 'paid' | 'refunded' | 'cancelled';
+export type CommissionStatus = 'pending' | 'paid' | 'cancelled';
 
 export interface Commission {
   id: number;
