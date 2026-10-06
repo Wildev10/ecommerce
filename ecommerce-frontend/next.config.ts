@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
         hostname: process.env.NEXT_PUBLIC_API_HOSTNAME ?? 'api.tondomaine.com',
         pathname: '/storage/**',
       },
+      {
+        // Images placeholder (données seedées en dev)
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
     ],
   },
 };
