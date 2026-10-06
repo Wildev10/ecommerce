@@ -6,22 +6,7 @@ import { Package, Truck, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { deliveryApi } from '@/lib/api';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import toast from 'react-hot-toast';
-
-interface DeliveryDashboard {
-  pending_deliveries: number;
-  active_deliveries: number;
-  completed_today: number;
-  total_completed: number;
-  earnings_today: number;
-  current_orders: Array<{
-    id: number;
-    order_number: string;
-    total: number;
-    status: string;
-    address?: { quarter: string; city: string; phone: string };
-    user?: { name: string };
-  }>;
-}
+import type { DeliveryDashboard } from '@/types';
 
 export default function DeliveryDashboardPage() {
   const [data, setData] = useState<DeliveryDashboard | null>(null);
@@ -32,7 +17,7 @@ export default function DeliveryDashboardPage() {
   const loadDashboard = async () => {
     try {
       const res = await deliveryApi.getDashboard();
-      setData(res as unknown as DeliveryDashboard);
+      setData(res);
     } catch (error) {
       toast.error(extractErrorMessage(error));
     } finally {

@@ -137,6 +137,7 @@ export type OrderStatus =
   | 'confirmed'
   | 'processing'
   | 'shipped'
+  | 'delivering'
   | 'delivered'
   | 'cancelled'
   | 'refunded';
@@ -370,11 +371,11 @@ export interface SellerDashboard {
 export type DeliveryStatus = 'assigned' | 'picked_up' | 'delivering' | 'delivered';
 
 export interface DeliveryDashboard {
-  total_deliveries: number;
-  completed_deliveries: number;
-  in_progress_deliveries: number;
   pending_deliveries: number;
-  recent_deliveries: Order[];
+  active_deliveries: number;
+  completed_today: number;
+  total_completed: number;
+  current_orders: Order[];
 }
 
 // ============================================
