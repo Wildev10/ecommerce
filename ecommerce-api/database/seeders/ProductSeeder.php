@@ -316,11 +316,11 @@ class ProductSeeder extends Seeder
                 'seller_id'   => $sellerId,
                 'category_id' => $category->id,
                 'slug'        => Str::slug($productData['name']) . '-' . ($index + 1),
-                'image'       => 'https://via.placeholder.com/640x480.png?text=' . urlencode($productData['name']),
+                'image'       => 'https://picsum.photos/seed/' . urlencode($productData['name']) . '/640/480',
                 'gallery'     => [
-                    'https://via.placeholder.com/640x480.png?text=' . urlencode($productData['name'] . ' - 1'),
-                    'https://via.placeholder.com/640x480.png?text=' . urlencode($productData['name'] . ' - 2'),
-                    'https://via.placeholder.com/640x480.png?text=' . urlencode($productData['name'] . ' - 3'),
+                    'https://picsum.photos/seed/' . urlencode($productData['name'] . '-1') . '/640/480',
+                    'https://picsum.photos/seed/' . urlencode($productData['name'] . '-2') . '/640/480',
+                    'https://picsum.photos/seed/' . urlencode($productData['name'] . '-3') . '/640/480',
                 ],
                 'is_active'   => true,
             ]));
