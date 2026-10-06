@@ -41,6 +41,7 @@ export default function DashboardPaymentsPage() {
   const [lastPage, setLastPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadPayments(); }, [page]);
 
   const loadPayments = async () => {

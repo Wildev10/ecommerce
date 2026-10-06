@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { productsApi } from '@/lib/api';
+import Image from 'next/image';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import { Loader2, AlertTriangle, Check, Package } from 'lucide-react';
 import type { Product, PaginationMeta } from '@/types';
@@ -18,6 +19,7 @@ export default function SellerStockPage() {
 
   useEffect(() => {
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const loadProducts = async () => {
@@ -129,7 +131,7 @@ export default function SellerStockPage() {
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                           {product.image_url ? (
-                            <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+                            <Image src={product.image_url} alt="" width={40} height={40} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center"><Package className="h-5 w-5 text-gray-400" /></div>
                           )}

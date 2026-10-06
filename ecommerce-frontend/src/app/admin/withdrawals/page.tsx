@@ -36,6 +36,7 @@ export default function AdminWithdrawalsPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [page, filter]);
 
   const handleProcess = async (id: number, action: 'complete' | 'reject') => {

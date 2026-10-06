@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, SlidersHorizontal, X, ShoppingCart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
@@ -141,7 +142,7 @@ export default function ProductsPage() {
                 <Link href={`/products/${product.slug || product.id}`} className="block">
                   <div className="aspect-square bg-gray-100 relative">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <ShoppingCart className="h-12 w-12" />

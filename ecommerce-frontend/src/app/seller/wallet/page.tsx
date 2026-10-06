@@ -38,6 +38,7 @@ export default function SellerWalletPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [page]);
 
   const handleWithdraw = async (e: React.FormEvent) => {

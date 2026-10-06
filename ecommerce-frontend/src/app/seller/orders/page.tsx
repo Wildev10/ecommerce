@@ -33,6 +33,7 @@ export default function SellerOrdersPage() {
 
   useEffect(() => {
     loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statusFilter]);
 
   const loadOrders = async () => {

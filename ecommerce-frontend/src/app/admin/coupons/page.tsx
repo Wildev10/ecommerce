@@ -28,6 +28,7 @@ export default function AdminCouponsPage() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [submitting, setSubmitting] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadCoupons(); }, [page]);
 
   const loadCoupons = async () => {

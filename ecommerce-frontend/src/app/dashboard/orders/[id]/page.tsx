@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, MapPin, CreditCard, Clock, Loader2, Truck } from 'lucide-react';
 import { ordersApi, adminApi } from '@/lib/api';
 import type { Order } from '@/types';
@@ -40,6 +41,7 @@ export default function DashboardOrderDetailPage() {
   const [comment, setComment] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadOrder(); }, [params.id]);
 
   const loadOrder = async () => {
@@ -99,7 +101,7 @@ export default function DashboardOrderDetailPage() {
               {order.items?.map(item => (
                 <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg bg-gray-50">
                   {item.product?.image_url && (
-                    <img src={item.product.image_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                    <Image src={item.product.image_url} alt="" width={48} height={48} className="w-12 h-12 rounded-lg object-cover" />
                   )}
                   <div className="flex-1">
                     <p className="font-medium">{item.product?.name || `Produit #${item.product_id}`}</p>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Phone, Loader2, Truck, CheckCircle, Package } from 'lucide-react';
+import { MapPin, Phone, Loader2, Truck, CheckCircle } from 'lucide-react';
 import { deliveryApi } from '@/lib/api';
 import type { Order } from '@/types';
 import { formatPrice, formatDate, extractErrorMessage } from '@/lib/api-helpers';
@@ -22,6 +22,7 @@ export default function DeliveryOrdersPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadOrders(); }, [page, filter]);
 
   const loadOrders = async () => {

@@ -27,6 +27,7 @@ export default function AdminOrdersPage() {
   const [lastPage, setLastPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadOrders(); }, [page]);
 
   const loadOrders = async () => {

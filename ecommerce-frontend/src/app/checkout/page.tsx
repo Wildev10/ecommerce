@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, CreditCard, Plus, Loader2, Truck, ShoppingBag, AlertTriangle } from 'lucide-react';
+import { MapPin, CreditCard, Plus, Loader2, Truck, ShoppingBag } from 'lucide-react';
 import { addressApi, ordersApi, cartApi } from '@/lib/api';
 import type { Address } from '@/types';
 import { CartResponse } from '@/lib/api';
@@ -47,6 +47,7 @@ export default function CheckoutPage() {
       return;
     }
     syncAndLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   /**

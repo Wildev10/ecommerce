@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ordersApi } from '@/lib/api';
 import { formatPrice, formatDate, orderStatusLabels, orderStatusColors, paymentStatusColors } from '@/lib/api-helpers';
 import { useAuthStore } from '@/stores/auth-store';
@@ -23,6 +24,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       return;
     }
     loadOrder();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isAuthenticated]);
 
   const loadOrder = async () => {
@@ -132,7 +134,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <div key={item.id} className="py-4 flex items-center gap-4">
                   <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     {item.product?.image_url ? (
-                      <img src={item.product.image_url} alt={item.product_name} className="h-full w-full object-cover rounded-lg" />
+                      <Image src={item.product.image_url} alt={item.product_name} width={64} height={64} className="h-full w-full object-cover rounded-lg" />
                     ) : (
                       <Package className="h-6 w-6 text-gray-400" />
                     )}

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Package, ShoppingCart, DollarSign, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { sellerApi } from '@/lib/api';
-import { formatPrice, formatDate } from '@/lib/api-helpers';
+import { formatPrice } from '@/lib/api-helpers';
 import { extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';

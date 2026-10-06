@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuthStore } from '@/stores/auth-store';
 import { authApi, ordersApi, addressApi } from '@/lib/api';
 import { extractErrorMessage, formatDate } from '@/lib/api-helpers';
@@ -23,7 +24,6 @@ import {
   X,
   Eye,
   EyeOff,
-  Camera,
   Store,
   ShoppingBag,
   Truck,
@@ -77,6 +77,7 @@ export default function ProfilePage() {
       return;
     }
     loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -210,7 +211,7 @@ export default function ProfilePage() {
           <div className="relative">
             <div className="h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
               {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.name} className="h-24 w-24 rounded-full object-cover" />
+                <Image src={user.avatar_url} alt={user.name} width={96} height={96} className="h-24 w-24 rounded-full object-cover" />
               ) : (
                 <span className="text-4xl font-bold">{user.name.charAt(0).toUpperCase()}</span>
               )}

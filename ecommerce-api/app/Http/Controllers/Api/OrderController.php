@@ -134,10 +134,24 @@ class OrderController extends Controller
         $total = $subtotal - $discount + $shippingFee;
 
         // Créer la commande dans une transaction
+        try {
         $order = DB::transaction(function () use (
             $user, $cart, $cartItems, $subtotal, $discount, $shippingFee, $total,
             $couponId, $request
         ) {
+            // Verrouillage des lignes produits pour éviter la race condition sur le stock
+            $productIds  = $cartItems->pluck('product_id')->toArray();
+            $lockedProds = Product::whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
+
+            foreach ($cartItems as $item) {
+                $prod = $lockedProds->get($item->product_id);
+                if (!$prod || $item->quantity > $prod->stock) {
+                    throw new \RuntimeException(
+                        "Stock insuffisant pour '{$item->product->name}'. Disponible : " . ($prod ? $prod->stock : 0)
+                    );
+                }
+            }
+
             $order = Order::create([
                 'user_id'        => $user->id,
                 'address_id'     => $request->address_id,
@@ -183,6 +197,9 @@ class OrderController extends Controller
 
             return $order;
         });
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), 400);
+        }
 
         $order->load(['items', 'address', 'statusHistory']);
 

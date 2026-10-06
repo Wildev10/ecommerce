@@ -32,6 +32,7 @@ export default function AdminDisputesPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [page, filter]);
 
   if (loading && disputes.length === 0) return <Loading text="Chargement..." />;

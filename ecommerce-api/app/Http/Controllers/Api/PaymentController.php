@@ -12,65 +12,117 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PaymentConfirmationMail;
+use FedaPay\FedaPay;
+use FedaPay\Transaction as FedaTransaction;
 
 class PaymentController extends Controller
 {
     use ApiResponse;
 
     /**
-     * POST /api/orders/{orderId}/pay — Payer une commande
-     * Accès : Authentifié (propriétaire de la commande)
+     * POST /api/orders/{orderId}/pay
+     * - cash_on_delivery : confirmé immédiatement (pas de gateway)
+     * - mobile_money / mtn_momo / moov_money : transaction FedaPay async
      */
     public function pay(PhoneRequest $request, $orderId, PhoneValidationService $phoneService)
     {
-        $order = Order::findOrFail($orderId);
+        $order = Order::with('payment')->findOrFail($orderId);
 
         if ($order->user_id !== auth()->id()) {
             return $this->error('Non autorisé', 403);
         }
 
-        if ($order->payment) {
+        if ($order->payment && $order->payment->status === 'completed') {
             return $this->error('Cette commande est déjà payée', 400);
         }
 
-        // Normaliser le numéro de téléphone en 8 chiffres
-        $normalizedPhone = null;
-        $operator = null;
-        if ($request->phone_number && in_array($request->payment_method, ['mobile_money', 'mtn_momo', 'moov_money'])) {
-            $normalizedPhone = $phoneService->normalize($request->phone_number);
-            $detection = $phoneService->detectOperator($request->phone_number);
-            $operator = $detection['operator'];
+        $method = $request->payment_method;
+
+        // ── Cash on delivery : pas de gateway ──────────────────────────────
+        if ($method === 'cash_on_delivery') {
+            $payment = Payment::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'user_id'        => auth()->id(),
+                    'amount'         => $order->total,
+                    'method'         => $method,
+                    'status'         => 'completed',
+                    'transaction_id' => 'COD-' . strtoupper(uniqid()),
+                ]
+            );
+
+            $order->update([
+                'status'         => 'processing',
+                'payment_status' => 'paid',
+                'transaction_id' => $payment->transaction_id,
+            ]);
+
+            $order->load('items.product');
+            app(CommissionService::class)->recordForOrder($order);
+
+            $payment->load(['user', 'order']);
+            Mail::to(auth()->user())->send(new PaymentConfirmationMail($payment));
+
+            return $this->success($payment, 'Commande confirmée (paiement à la livraison)', 201);
         }
 
-        $payment = Payment::create([
-            'order_id'       => $order->id,
-            'user_id'        => auth()->id(),
-            'amount'         => $order->total,
-            'method'         => $request->payment_method,
-            'status'         => 'completed',
-            'transaction_id' => 'TXN-' . strtoupper(uniqid()),
-            'phone_number'   => $normalizedPhone,
-        ]);
+        // ── Mobile money : FedaPay ──────────────────────────────────────────
+        $normalizedPhone = null;
+        if ($request->phone_number) {
+            $normalizedPhone = $phoneService->normalize($request->phone_number);
+        }
 
-        $order->update([
-            'status'         => 'processing',
-            'payment_status' => 'paid',
-            'transaction_id' => $payment->transaction_id,
-        ]);
+        $user = auth()->user();
 
-        // Record commissions for each seller
-        $order->load('items.product');
-        app(CommissionService::class)->recordForOrder($order);
+        $this->initFedaPay();
 
-        $payment->load(['user', 'order']);
-        Mail::to(auth()->user())->send(new PaymentConfirmationMail($payment));
+        $nameParts = explode(' ', trim($user->name), 2);
+        $firstname = $nameParts[0];
+        $lastname  = $nameParts[1] ?? $nameParts[0];
 
-        return $this->success($payment, 'Paiement effectué avec succès', 201);
+        try {
+            $transaction = FedaTransaction::create([
+                'description'  => 'Commande #' . $order->order_number,
+                'amount'       => (int) $order->total,
+                'currency'     => ['iso' => 'XOF'],
+                'callback_url' => config('services.fedapay.webhook_url'),
+                'customer'     => [
+                    'firstname'    => $firstname,
+                    'lastname'     => $lastname,
+                    'email'        => $user->email,
+                    'phone_number' => [
+                        'number'  => $normalizedPhone ?? '',
+                        'country' => 'bj',
+                    ],
+                ],
+            ]);
+
+            $token = $transaction->generateToken();
+
+            $payment = Payment::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'user_id'        => auth()->id(),
+                    'amount'         => $order->total,
+                    'method'         => $method,
+                    'status'         => 'pending',
+                    'transaction_id' => (string) $transaction->id,
+                    'phone_number'   => $normalizedPhone,
+                ]
+            );
+
+            return $this->success([
+                'payment'        => $payment,
+                'redirect_url'   => $token->url,
+                'transaction_id' => $transaction->id,
+            ], 'Redirection vers le paiement FedaPay', 201);
+        } catch (\Exception $e) {
+            return $this->error('Erreur lors de la création du paiement : ' . $e->getMessage(), 500);
+        }
     }
 
     /**
-     * GET /api/payments — Voir mes paiements
-     * Accès : Authentifié
+     * GET /api/payments — Mes paiements
      */
     public function myPayments(Request $request)
     {
@@ -84,7 +136,6 @@ class PaymentController extends Controller
 
     /**
      * GET /api/payments/{id} — Détail d'un paiement
-     * Accès : Authentifié (propriétaire)
      */
     public function show($id)
     {
@@ -99,7 +150,6 @@ class PaymentController extends Controller
 
     /**
      * GET /api/admin/payments — Tous les paiements (admin)
-     * Accès : Admin uniquement
      */
     public function index(Request $request)
     {
@@ -111,8 +161,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * POST /api/admin/orders/{orderId}/refund — Rembourser une commande
-     * Accès : Admin uniquement
+     * POST /api/admin/orders/{orderId}/refund — Rembourser (admin)
      */
     public function refund(Request $request, $orderId)
     {
@@ -134,21 +183,13 @@ class PaymentController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
-        $order->payment->update([
-            'status' => 'refunded',
-        ]);
+        $order->payment->update(['status' => 'refunded']);
+        $order->update(['status' => 'refunded', 'payment_status' => 'refunded']);
 
-        $order->update([
-            'status'         => 'refunded',
-            'payment_status' => 'refunded',
-        ]);
-
-        // Remettre le stock
         foreach ($order->items as $item) {
             \App\Models\Product::where('id', $item->product_id)->increment('stock', $item->quantity);
         }
 
-        // Reverser les commissions vendeurs
         app(CommissionService::class)->reverseForOrder($order);
 
         $order->statusHistory()->create([
@@ -165,8 +206,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * GET /api/payments/{orderId}/status — Statut du paiement d'une commande
-     * Accès : Authentifié
+     * GET /api/payments/{orderId}/status
      */
     public function status($orderId)
     {
@@ -183,5 +223,11 @@ class PaymentController extends Controller
             'payment_method' => $order->payment_method,
             'payment'        => $order->payment,
         ], 'Statut du paiement');
+    }
+
+    private function initFedaPay(): void
+    {
+        FedaPay::setApiKey(config('services.fedapay.secret_key'));
+        FedaPay::setEnvironment(config('services.fedapay.env', 'sandbox'));
     }
 }
