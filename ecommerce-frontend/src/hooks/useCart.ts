@@ -11,6 +11,7 @@ export function useCart() {
     addItem,
     removeItem,
     updateQuantity,
+    setCartItemId,
     clearCart,
     getTotalItems,
     getTotalPrice,
@@ -42,10 +43,9 @@ export function useCart() {
 
       // Sync avec le backend (fire & forget)
       try {
-        await api.post('/cart', {
-          product_id: product.id,
-          quantity,
-        });
+        const res = await api.post('/cart', { product_id: product.id, quantity });
+        const cartItemId = res.data?.data?.item_id;
+        if (cartItemId) setCartItemId(product.id, cartItemId);
       } catch {
         // Le panier local reste valide
       }
@@ -60,10 +60,11 @@ export function useCart() {
   const removeFromCart = async (productId: number) => {
     setLoading(true);
     try {
+      const cartItemId = items.find((i) => i.id === productId)?.cartItemId;
       removeItem(productId);
 
       try {
-        await api.delete(`/cart/${productId}`);
+        await api.delete(`/cart/${cartItemId ?? productId}`);
       } catch {
         // Silencieux
       }
@@ -78,10 +79,11 @@ export function useCart() {
   const changeQuantity = async (productId: number, quantity: number) => {
     setLoading(true);
     try {
+      const cartItemId = items.find((i) => i.id === productId)?.cartItemId;
       updateQuantity(productId, quantity);
 
       try {
-        await api.put(`/cart/${productId}`, { quantity });
+        await api.put(`/cart/${cartItemId ?? productId}`, { quantity });
       } catch {
         // Silencieux
       }
@@ -129,6 +131,7 @@ export function useCart() {
           }) => {
             addItem({
               id: item.product_id,
+              cartItemId: item.item_id,
               name: item.product_name,
               price: item.product_price,
               quantity: item.quantity,
