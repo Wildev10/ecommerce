@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface CartItem {
-  id: number;
+  id: number;       // product_id — used as local identifier
+  cartItemId?: number; // cart_items.id from backend — used for API calls
   name: string;
   price: number;
   quantity: number;
@@ -15,6 +16,7 @@ interface CartState {
   addItem: (item: CartItem) => void;
   removeItem: (id: number) => void;
   updateQuantity: (id: number, quantity: number) => void;
+  setCartItemId: (productId: number, cartItemId: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -55,6 +57,13 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((i) =>
             i.id === id ? { ...i, quantity: Math.max(1, Math.min(quantity, i.stock)) } : i
+          ),
+        })),
+
+      setCartItemId: (productId, cartItemId) =>
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.id === productId ? { ...i, cartItemId } : i
           ),
         })),
 
