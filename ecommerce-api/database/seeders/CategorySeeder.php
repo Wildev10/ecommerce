@@ -107,7 +107,7 @@ class CategorySeeder extends Seeder
                         'name'        => $child['name'],
                         'slug'        => Str::slug($cat['name'] . ' ' . $child['name']),
                         'description' => $child['description'],
-                        'image'       => 'https://picsum.photos/seed/' . urlencode($child['name/640/480']),
+                        'image'       => 'https://picsum.photos/seed/' . urlencode($child['name']) . '/640/480',
                         'is_active'   => true,
                     ]);
                 }
