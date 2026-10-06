@@ -14,7 +14,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Électronique',
                 'description' => 'Smartphones, ordinateurs, accessoires tech et gadgets électroniques.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Electronique',
+                'image'       => 'https://picsum.photos/seed/Electronique/640/480',
                 'children'    => [
                     ['name' => 'Smartphones', 'description' => 'Téléphones portables et smartphones dernière génération.'],
                     ['name' => 'Ordinateurs', 'description' => 'Laptops, desktops et accessoires informatiques.'],
@@ -24,7 +24,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Vêtements',
                 'description' => 'Mode homme, femme et enfant. Vêtements tendance pour toutes les occasions.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Vetements',
+                'image'       => 'https://picsum.photos/seed/Vetements/640/480',
                 'children'    => [
                     ['name' => 'Homme', 'description' => 'Vêtements et accessoires pour hommes.'],
                     ['name' => 'Femme', 'description' => 'Vêtements et accessoires pour femmes.'],
@@ -34,7 +34,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Maison & Jardin',
                 'description' => 'Mobilier, décoration d\'intérieur et équipements de jardin.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Maison+Jardin',
+                'image'       => 'https://picsum.photos/seed/Maison+Jardin/640/480',
                 'children'    => [
                     ['name' => 'Mobilier', 'description' => 'Canapés, tables, chaises et rangements.'],
                     ['name' => 'Décoration', 'description' => 'Objets déco, cadres, luminaires et tapis.'],
@@ -44,7 +44,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Sports',
                 'description' => 'Équipements sportifs, vêtements de sport et accessoires fitness.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Sports',
+                'image'       => 'https://picsum.photos/seed/Sports/640/480',
                 'children'    => [
                     ['name' => 'Fitness', 'description' => 'Tapis de sport, haltères, élastiques et vêtements fitness.'],
                     ['name' => 'Football', 'description' => 'Ballons, maillots, chaussures et accessoires de foot.'],
@@ -54,7 +54,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Livres',
                 'description' => 'Romans, manuels scolaires, livres de développement personnel et BD.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Livres',
+                'image'       => 'https://picsum.photos/seed/Livres/640/480',
                 'children'    => [
                     ['name' => 'Romans', 'description' => 'Romans français, africains et internationaux.'],
                     ['name' => 'Scolaire', 'description' => 'Manuels scolaires et universitaires.'],
@@ -63,7 +63,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Beauté',
                 'description' => 'Cosmétiques, soins de la peau, maquillage et parfums.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Beaute',
+                'image'       => 'https://picsum.photos/seed/Beaute/640/480',
                 'children'    => [
                     ['name' => 'Maquillage', 'description' => 'Fond de teint, rouge à lèvres, mascara et palettes.'],
                     ['name' => 'Soins Peau', 'description' => 'Crèmes, sérums, nettoyants et masques.'],
@@ -73,7 +73,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Jouets',
                 'description' => 'Jouets pour enfants de tous âges, jeux éducatifs et de société.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Jouets',
+                'image'       => 'https://picsum.photos/seed/Jouets/640/480',
                 'children'    => [
                     ['name' => 'Jeux Éducatifs', 'description' => 'Puzzles, jeux de construction et jeux d\'apprentissage.'],
                     ['name' => 'Jeux de Société', 'description' => 'Monopoly, Scrabble, Uno et jeux de cartes.'],
@@ -82,7 +82,7 @@ class CategorySeeder extends Seeder
             [
                 'name'        => 'Alimentation',
                 'description' => 'Produits alimentaires, boissons, épicerie fine et produits locaux.',
-                'image'       => 'https://via.placeholder.com/640x480.png?text=Alimentation',
+                'image'       => 'https://picsum.photos/seed/Alimentation/640/480',
                 'children'    => [
                     ['name' => 'Épicerie', 'description' => 'Riz, pâtes, conserves et condiments.'],
                     ['name' => 'Boissons', 'description' => 'Jus, sodas, eau et boissons locales.'],
@@ -107,7 +107,7 @@ class CategorySeeder extends Seeder
                         'name'        => $child['name'],
                         'slug'        => Str::slug($cat['name'] . ' ' . $child['name']),
                         'description' => $child['description'],
-                        'image'       => 'https://via.placeholder.com/640x480.png?text=' . urlencode($child['name']),
+                        'image'       => 'https://picsum.photos/seed/' . urlencode($child['name/640/480']),
                         'is_active'   => true,
                     ]);
                 }
