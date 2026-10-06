@@ -42,7 +42,8 @@ export default function AdminWithdrawalsPage() {
   const handleProcess = async (id: number, action: 'complete' | 'reject') => {
     setProcessing(id);
     try {
-      const data: { action: 'complete' | 'reject'; transaction_id?: string } = { action };
+      const status = action === 'complete' ? 'completed' : 'rejected';
+      const data: { status: 'completed' | 'rejected'; transaction_id?: string } = { status };
       if (action === 'complete') {
         const txId = prompt('ID de transaction (optionnel) :');
         if (txId) data.transaction_id = txId;

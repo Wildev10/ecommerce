@@ -615,7 +615,7 @@ export const adminApi = {
     return res.data;
   },
 
-  processWithdrawal: async (id: number, data: { action: 'complete' | 'reject'; transaction_id?: string }) => {
+  processWithdrawal: async (id: number, data: { status: 'completed' | 'rejected'; transaction_id?: string }) => {
     const res = await axios.put(`/admin/withdrawals/${id}/process`, data);
     return res.data;
   },
