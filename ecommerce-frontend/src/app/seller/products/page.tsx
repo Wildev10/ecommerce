@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import Image from 'next/image';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
-import { Loader2, Plus, Edit, Trash2, AlertTriangle, X, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Loader2, Plus, Edit, Trash2, AlertTriangle, X, Package,
+  ChevronLeft, ChevronRight, ImagePlus, Star,
+} from 'lucide-react';
 import type { Product, Category, PaginationMeta } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -22,7 +25,8 @@ export default function SellerProductsPage() {
   const [form, setForm] = useState({
     name: '', description: '', price: '', compare_price: '', stock: '', category_id: '', is_active: true,
   });
-  const [images, setImages] = useState<File[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -44,7 +48,7 @@ export default function SellerProductsPage() {
   const openCreate = () => {
     setEditingProduct(null);
     setForm({ name: '', description: '', price: '', compare_price: '', stock: '', category_id: '', is_active: true });
-    setImages([]);
+    setNewImages([]);
     setShowModal(true);
   };
 
@@ -59,7 +63,7 @@ export default function SellerProductsPage() {
       category_id: String(product.category_id),
       is_active: product.is_active,
     });
-    setImages([]);
+    setNewImages([]);
     setShowModal(true);
   };
 
@@ -75,7 +79,7 @@ export default function SellerProductsPage() {
       fd.append('stock', form.stock);
       fd.append('category_id', form.category_id);
       fd.append('is_active', form.is_active ? '1' : '0');
-      images.forEach((file, i) => {
+      newImages.forEach((file, i) => {
         if (i === 0) fd.append('image', file);
         else fd.append(`gallery[${i - 1}]`, file);
       });
@@ -107,13 +111,29 @@ export default function SellerProductsPage() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (images.length + files.length > 5) { toast.error('Maximum 5 images'); return; }
-    setImages((prev) => [...prev, ...files].slice(0, 5));
+  const addFiles = useCallback((files: FileList | null) => {
+    if (!files) return;
+    const incoming = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    setNewImages((prev) => {
+      const combined = [...prev, ...incoming].slice(0, 5);
+      if (prev.length + incoming.length > 5) toast.error('Maximum 5 images');
+      return combined;
+    });
+  }, []);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    addFiles(e.dataTransfer.files);
   };
 
-  const inputCls = 'w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-blue-600 transition';
+  const inputCls = 'w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-orange-500 transition';
+
+  // Images to show when editing: existing ones from the product
+  const existingImageUrl = editingProduct?.image_url ?? null;
+  const existingGallery = editingProduct?.gallery_urls ?? [];
+  const totalExisting = existingImageUrl ? 1 + existingGallery.length : 0;
+  const slotsLeft = 5 - newImages.length;
 
   if (loading && products.length === 0) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>;
@@ -161,9 +181,9 @@ export default function SellerProductsPage() {
                   <tr key={product.id} className="hover:bg-slate-50/50 transition">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-slate-100 rounded-xl shrink-0 overflow-hidden">
+                        <div className="h-12 w-12 bg-slate-100 rounded-xl shrink-0 overflow-hidden">
                           {product.image_url ? (
-                            <Image src={product.image_url} alt="" width={40} height={40} className="h-full w-full object-cover" />
+                            <Image src={product.image_url} alt="" width={48} height={48} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
                               <Package className="h-5 w-5 text-slate-300" />
@@ -243,6 +263,100 @@ export default function SellerProductsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              {/* Photos */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Photos du produit
+                  <span className="ml-1.5 text-slate-400 font-normal">(max 5 — la 1ère sera la photo principale)</span>
+                </label>
+
+                {/* Existing images info when editing */}
+                {editingProduct && totalExisting > 0 && newImages.length === 0 && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 flex items-start gap-2">
+                    <Star className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-500" />
+                    <span>
+                      Ce produit a déjà {totalExisting} photo{totalExisting > 1 ? 's' : ''}.
+                      Ajoutez de nouvelles photos ci-dessous pour les remplacer, ou laissez vide pour garder les photos actuelles.
+                    </span>
+                  </div>
+                )}
+
+                {/* Preview of existing main image when editing */}
+                {editingProduct && existingImageUrl && newImages.length === 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="relative w-24 h-24 bg-slate-100 rounded-xl overflow-hidden border-2 border-orange-300">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={existingImageUrl} alt="Photo actuelle" className="w-full h-full object-cover" />
+                      <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">
+                        Actuelle
+                      </span>
+                    </div>
+                    {existingGallery.slice(0, 3).map((url, i) => (
+                      <div key={i} className="relative w-24 h-24 bg-slate-100 rounded-xl overflow-hidden border-2 border-slate-200">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* New image previews */}
+                {newImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {newImages.map((file, i) => (
+                      <div key={i} className="relative w-24 h-24 bg-slate-100 rounded-xl overflow-hidden border-2 border-orange-300">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                        {i === 0 && (
+                          <span className="absolute bottom-0 left-0 right-0 bg-orange-500 text-white text-[9px] font-bold text-center py-0.5">
+                            Principale
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setNewImages(newImages.filter((_, idx) => idx !== i))}
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold transition"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Drop zone */}
+                {slotsLeft > 0 && (
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center gap-2 cursor-pointer transition ${
+                      dragOver
+                        ? 'border-orange-400 bg-orange-50'
+                        : 'border-slate-200 hover:border-orange-400 hover:bg-orange-50/50'
+                    }`}
+                  >
+                    <ImagePlus className={`h-8 w-8 ${dragOver ? 'text-orange-500' : 'text-slate-300'}`} />
+                    <p className="text-sm font-medium text-slate-600">
+                      Cliquez ou glissez-déposez vos photos ici
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      JPG, PNG, WEBP — {slotsLeft} emplacement{slotsLeft > 1 ? 's' : ''} restant{slotsLeft > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => addFiles(e.target.files)}
+                  className="hidden"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nom *</label>
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -252,7 +366,7 @@ export default function SellerProductsPage() {
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description *</label>
                 <textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className={`${inputCls} resize-none`} rows={4} placeholder="Description détaillée" />
+                  className={`${inputCls} resize-none`} rows={4} placeholder="Description détaillée du produit" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -286,32 +400,9 @@ export default function SellerProductsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Images (max 5)</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {images.map((file, i) => (
-                    <div key={i} className="relative w-20 h-20 bg-slate-100 rounded-xl overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
-                {images.length < 5 && (
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition">
-                    + Ajouter des images
-                  </button>
-                )}
-              </div>
-
               <label className="flex items-center gap-2.5 cursor-pointer">
-                <input type="checkbox" id="is_active" checked={form.is_active}
-                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded accent-blue-600 w-4 h-4" />
+                <input type="checkbox" checked={form.is_active}
+                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded accent-orange-500 w-4 h-4" />
                 <span className="text-sm text-slate-700 font-medium">Produit actif (visible pour les clients)</span>
               </label>
 
@@ -323,7 +414,7 @@ export default function SellerProductsPage() {
                 <button type="submit" disabled={saving}
                   className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center gap-2 transition">
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {editingProduct ? 'Modifier' : 'Créer le produit'}
+                  {editingProduct ? 'Enregistrer' : 'Créer le produit'}
                 </button>
               </div>
             </form>

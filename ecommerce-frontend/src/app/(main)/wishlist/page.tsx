@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, ShoppingCart, Trash2, Loader2, Star } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, Loader2, Star, Package } from 'lucide-react';
 import { wishlistApi } from '@/lib/api';
 import type { WishlistItem } from '@/types';
-import { formatPrice, extractErrorMessage, getProductImage } from '@/lib/api-helpers';
+import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
 import { useRouter } from 'next/navigation';
@@ -115,11 +115,17 @@ export default function WishlistPage() {
 
                 <Link href={`/products/${product.slug}`}>
                   <div className="aspect-square bg-slate-100 relative overflow-hidden">
-                    <img
-                      src={getProductImage(product.name, product.image_url) ?? ''}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-10 w-10 text-slate-300" />
+                      </div>
+                    )}
                     {product.stock <= 0 && (
                       <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
                         <span className="bg-white text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full">Rupture</span>

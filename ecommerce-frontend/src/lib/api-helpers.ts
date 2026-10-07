@@ -56,12 +56,10 @@ export function formatPrice(price: number | string): string {
 }
 
 /**
- * Retourne l'URL de l'image produit : l'image uploadée si elle existe,
- * sinon une photo Unsplash basée sur le nom du produit.
+ * Retourne l'URL de l'image uploadée du produit, ou null si aucune.
  */
-export function getProductImage(name: string, imageUrl?: string | null): string | null {
-  if (imageUrl) return imageUrl;
-  return `https://source.unsplash.com/featured/400x400/?${encodeURIComponent(name)},product`;
+export function getProductImage(_name: string, imageUrl?: string | null): string | null {
+  return imageUrl ?? null;
 }
 
 /**
