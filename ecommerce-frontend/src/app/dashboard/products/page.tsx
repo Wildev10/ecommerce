@@ -5,7 +5,6 @@ import {
   Package, Search, ToggleLeft, ToggleRight, Trash2, Loader2,
   ChevronLeft, ChevronRight, Edit, X, ImagePlus, Star,
 } from 'lucide-react';
-import Image from 'next/image';
 import { adminApi, productsApi, categoriesApi } from '@/lib/api';
 import type { Product, Category } from '@/types';
 import { formatPrice, formatDate, extractErrorMessage } from '@/lib/api-helpers';
@@ -184,7 +183,8 @@ export default function DashboardProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
                           {product.image_url ? (
-                            <Image src={product.image_url} alt="" width={40} height={40} className="w-full h-full object-cover" />
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={product.image_url} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <Package className="h-5 w-5 text-slate-300" />
                           )}
