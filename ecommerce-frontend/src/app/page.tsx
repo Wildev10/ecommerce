@@ -271,14 +271,13 @@ export default function HomePage() {
                 className="product-card bg-white rounded-2xl border border-slate-100 overflow-hidden group"
               >
                 <Link href={`/products/${product.slug}`} className="block relative">
-                  <div className="aspect-square bg-slate-50 relative overflow-hidden">
+                  <div className="aspect-square bg-slate-50 overflow-hidden">
                     {product.image_url ? (
-                      <Image
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
                         src={product.image_url}
                         alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
