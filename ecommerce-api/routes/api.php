@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\WebhookController;
 // ║         WEBHOOKS (pas d'auth)                 ║
 // ╚═══════════════════════════════════════════════╝
 Route::post('/webhooks/fedapay', [WebhookController::class, 'fedapay']);
+Route::get('/webhooks/fedapay', [WebhookController::class, 'fedapayBrowserRedirect']);
 
 // ╔═══════════════════════════════════════════════╗
 // ║         SANTÉ & MONITORING                    ║
