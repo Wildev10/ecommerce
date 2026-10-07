@@ -109,9 +109,9 @@ export default function PhoneInput({
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="01 97 00 00 00  ou  97 00 00 00"
+            placeholder={method === 'mtn_momo' ? '66 00 00 01' : method === 'moov_money' ? '96 00 00 01' : '66 00 00 01'}
             className="flex-1 px-3 py-2.5 outline-none text-gray-900 placeholder-gray-400"
-            maxLength={14}
+            maxLength={16}
           />
         </div>
 
@@ -131,7 +131,7 @@ export default function PhoneInput({
 
         {/* Aide formats acceptés */}
         <p className="text-xs text-gray-400 mt-1">
-          Formats acceptés : 97000000 · 0197000000 · +229 01 97 00 00 00
+          Saisir les chiffres après +229 — ex : <span className="font-mono">66 00 00 01</span> ou <span className="font-mono">01 66 00 00 01</span>
         </p>
       </div>
 
