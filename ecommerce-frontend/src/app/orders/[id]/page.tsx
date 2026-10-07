@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ordersApi } from '@/lib/api';
 import { formatPrice, formatDate, orderStatusLabels, orderStatusColors, paymentStatusColors } from '@/lib/api-helpers';
 import { useAuthStore } from '@/stores/auth-store';
@@ -131,7 +130,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <div key={item.id} className="py-4 flex items-center gap-4">
                   <div className="h-16 w-16 bg-slate-100 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
                     {item.product?.image_url ? (
-                      <Image src={item.product.image_url} alt={item.product_name} width={64} height={64} className="h-full w-full object-cover" />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.product.image_url} alt={item.product_name} className="h-full w-full object-cover" />
                     ) : (
                       <Package className="h-6 w-6 text-slate-300" />
                     )}

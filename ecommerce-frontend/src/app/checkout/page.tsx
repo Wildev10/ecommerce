@@ -100,6 +100,7 @@ export default function CheckoutPage() {
       const defaultAddr = addressesData.find((a) => a.is_default);
       if (defaultAddr) setSelectedAddressId(defaultAddr.id);
       else if (addressesData.length > 0) setSelectedAddressId(addressesData[0].id);
+      else setShowNewAddress(true);
 
       if (!cartData?.items?.length) {
         toast.error('Votre panier est vide');
