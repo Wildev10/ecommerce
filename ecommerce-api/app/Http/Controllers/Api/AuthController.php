@@ -42,12 +42,18 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         Mail::to($user)->send(new WelcomeMail($user));
-        $user->sendEmailVerificationNotification();
+
+        if (app()->environment('local')) {
+            // En dev, on vérifie automatiquement pour éviter de cliquer le lien
+            $user->markEmailAsVerified();
+        } else {
+            $user->sendEmailVerificationNotification();
+        }
 
         return $this->success([
-            'user'                    => $user,
+            'user'                    => $user->fresh(),
             'token'                   => $token,
-            'email_verification_sent' => true,
+            'email_verification_sent' => !app()->environment('local'),
         ], 'Inscription réussie. Vérifiez votre email pour activer votre compte.', 201);
     }
 
