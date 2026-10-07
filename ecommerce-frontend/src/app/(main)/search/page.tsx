@@ -3,8 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Search as SearchIcon, Loader2, ShoppingCart, Star, Tag } from 'lucide-react';
+import { Search as SearchIcon, Loader2, ShoppingCart, Star, Tag, Package } from 'lucide-react';
 import { searchApi } from '@/lib/api';
 import type { Product, Category } from '@/types';
 import { formatPrice } from '@/lib/api-helpers';
@@ -185,10 +184,14 @@ function SearchContent() {
                     <Link href={`/products/${product.slug}`}>
                       <div className="aspect-square bg-slate-100 relative overflow-hidden">
                         {product.image_url ? (
-                          <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-300">
-                            <ShoppingCart className="h-10 w-10" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-10 w-10 text-slate-300" />
                           </div>
                         )}
                         {product.compare_price && product.compare_price > product.price && (

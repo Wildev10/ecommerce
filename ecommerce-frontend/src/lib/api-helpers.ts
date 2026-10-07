@@ -56,6 +56,13 @@ export function formatPrice(price: number | string): string {
 }
 
 /**
+ * Retourne l'URL de l'image uploadée du produit, ou null si aucune.
+ */
+export function getProductImage(_name: string, imageUrl?: string | null): string | null {
+  return imageUrl ?? null;
+}
+
+/**
  * Formater une date
  */
 export function formatDate(date: string): string {

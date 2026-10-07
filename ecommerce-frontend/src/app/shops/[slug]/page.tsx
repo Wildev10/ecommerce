@@ -9,7 +9,7 @@ import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';
 import type { Shop, Product } from '@/types';
-import { Store, MapPin, Phone, MessageCircle, Package } from 'lucide-react';
+import { Store, MapPin, Phone, MessageCircle, Package, ShoppingBag } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'next/navigation';
 
@@ -147,10 +147,14 @@ export default function ShopPage() {
               >
                 <div className="aspect-square bg-slate-100 relative overflow-hidden">
                   {product.image_url ? (
-                    <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                      <Store className="h-8 w-8" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ShoppingBag className="h-10 w-10 text-slate-300" />
                     </div>
                   )}
                   {product.compare_price && product.compare_price > product.price && (

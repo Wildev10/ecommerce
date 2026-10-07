@@ -3,17 +3,12 @@
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
-  Search,
-  X,
-  ShoppingCart,
-  Star,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  SlidersHorizontal,
-  ShoppingBag,
+  Search, X, ShoppingCart, Star, ChevronLeft, ChevronRight,
+  Loader2, SlidersHorizontal, ShoppingBag, Package,
+  Smartphone, Monitor, Headphones, Zap, Shirt, User, Gem, Baby,
+  Home, Armchair, Sparkles, Leaf, Dumbbell, Trophy, Watch,
+  BookOpen, Gamepad2, UtensilsCrossed, type LucideIcon,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
@@ -56,16 +51,14 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
       <Link href={`/products/${product.slug || product.id}`} className="block relative">
         <div className="aspect-square bg-slate-50 relative overflow-hidden">
           {product.image_url ? (
-            <Image
+            <img
               src={product.image_url}
               alt={product.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ShoppingBag className="h-14 w-14 text-slate-200" />
+            <div className="w-full h-full flex items-center justify-center bg-slate-100">
+              <Package className="h-12 w-12 text-slate-300" />
             </div>
           )}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -112,6 +105,38 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
       </div>
     </div>
   );
+}
+
+type CatMeta = { icon: LucideIcon; color: string; bg: string; activeBg: string };
+
+const CATEGORY_MAP: Record<string, CatMeta> = {
+  'electronique':                   { icon: Zap,             color: 'text-yellow-600',  bg: 'bg-yellow-50',   activeBg: 'bg-yellow-500' },
+  'electronique-smartphones':       { icon: Smartphone,      color: 'text-blue-600',    bg: 'bg-blue-50',     activeBg: 'bg-blue-600' },
+  'electronique-ordinateurs':       { icon: Monitor,         color: 'text-violet-600',  bg: 'bg-violet-50',   activeBg: 'bg-violet-600' },
+  'electronique-accessoires-tech':  { icon: Headphones,      color: 'text-cyan-600',    bg: 'bg-cyan-50',     activeBg: 'bg-cyan-600' },
+  'vetements':                      { icon: Shirt,           color: 'text-pink-600',    bg: 'bg-pink-50',     activeBg: 'bg-pink-600' },
+  'vetements-homme':                { icon: User,            color: 'text-slate-600',   bg: 'bg-slate-100',   activeBg: 'bg-slate-700' },
+  'vetements-femme':                { icon: Gem,             color: 'text-rose-600',    bg: 'bg-rose-50',     activeBg: 'bg-rose-500' },
+  'vetements-enfant':               { icon: Baby,            color: 'text-orange-500',  bg: 'bg-orange-50',   activeBg: 'bg-orange-500' },
+  'maison-jardin':                  { icon: Home,            color: 'text-green-600',   bg: 'bg-green-50',    activeBg: 'bg-green-600' },
+  'maison-jardin-mobilier':         { icon: Armchair,        color: 'text-amber-600',   bg: 'bg-amber-50',    activeBg: 'bg-amber-600' },
+  'maison-jardin-decoration':       { icon: Sparkles,        color: 'text-indigo-600',  bg: 'bg-indigo-50',   activeBg: 'bg-indigo-600' },
+  'maison-jardin-jardin':           { icon: Leaf,            color: 'text-emerald-600', bg: 'bg-emerald-50',  activeBg: 'bg-emerald-600' },
+  'sports':                         { icon: Dumbbell,        color: 'text-red-600',     bg: 'bg-red-50',      activeBg: 'bg-red-500' },
+  'sports-fitness':                 { icon: Dumbbell,        color: 'text-red-600',     bg: 'bg-red-50',      activeBg: 'bg-red-500' },
+  'sports-football':                { icon: Trophy,          color: 'text-green-600',   bg: 'bg-green-50',    activeBg: 'bg-green-600' },
+  'sports-running':                 { icon: Watch,           color: 'text-orange-600',  bg: 'bg-orange-50',   activeBg: 'bg-orange-600' },
+  'livres':                         { icon: BookOpen,        color: 'text-teal-600',    bg: 'bg-teal-50',     activeBg: 'bg-teal-600' },
+  'beaute':                         { icon: Sparkles,        color: 'text-fuchsia-600', bg: 'bg-fuchsia-50',  activeBg: 'bg-fuchsia-600' },
+  'jouets':                         { icon: Gamepad2,        color: 'text-yellow-600',  bg: 'bg-yellow-50',   activeBg: 'bg-yellow-500' },
+  'alimentation':                   { icon: UtensilsCrossed, color: 'text-orange-600',  bg: 'bg-orange-50',   activeBg: 'bg-orange-600' },
+  'alimentation-produits-locaux':   { icon: UtensilsCrossed, color: 'text-lime-600',    bg: 'bg-lime-50',     activeBg: 'bg-lime-600' },
+  'alimentation-snacks':            { icon: UtensilsCrossed, color: 'text-amber-600',   bg: 'bg-amber-50',    activeBg: 'bg-amber-600' },
+  'alimentation-boissons':          { icon: UtensilsCrossed, color: 'text-sky-600',     bg: 'bg-sky-50',      activeBg: 'bg-sky-600' },
+};
+
+function getCatMeta(slug: string): CatMeta {
+  return CATEGORY_MAP[slug] ?? { icon: ShoppingBag, color: 'text-slate-500', bg: 'bg-slate-100', activeBg: 'bg-slate-600' };
 }
 
 function ProductsContent() {
@@ -235,22 +260,37 @@ function ProductsContent() {
           {/* Categories */}
           <div>
             <h3 className="text-sm font-semibold text-slate-700 mb-3">Catégorie</h3>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <button
                 onClick={() => updateFilters({ category: '' })}
-                className={`w-full text-left px-3 py-2 text-sm rounded-xl transition font-medium ${!currentCategory ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm font-medium ${
+                  !currentCategory ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
+                }`}
               >
-                Toutes les catégories
+                <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${!currentCategory ? 'bg-white/20' : 'bg-slate-100'}`}>
+                  <ShoppingBag className={`h-3.5 w-3.5 ${!currentCategory ? 'text-white' : 'text-slate-500'}`} />
+                </span>
+                Tous les produits
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => { updateFilters({ category: cat.slug }); setSidebarOpen(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-xl transition ${currentCategory === cat.slug ? 'bg-blue-700 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  {cat.name}
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const isActive = currentCategory === cat.slug;
+                const meta = getCatMeta(cat.slug);
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => { updateFilters({ category: cat.slug }); setSidebarOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm ${
+                      isActive ? `${meta.activeBg} text-white font-semibold shadow-sm` : 'text-slate-700 hover:bg-slate-100 font-medium'
+                    }`}
+                  >
+                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive ? 'bg-white/20' : meta.bg}`}>
+                      <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : meta.color}`} />
+                    </span>
+                    {cat.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

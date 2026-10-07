@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Heart, ShoppingCart, Trash2, Loader2, Star } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, Loader2, Star, Package } from 'lucide-react';
 import { wishlistApi } from '@/lib/api';
 import type { WishlistItem } from '@/types';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
@@ -117,10 +116,14 @@ export default function WishlistPage() {
                 <Link href={`/products/${product.slug}`}>
                   <div className="aspect-square bg-slate-100 relative overflow-hidden">
                     {product.image_url ? (
-                      <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ShoppingCart className="h-12 w-12" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-10 w-10 text-slate-300" />
                       </div>
                     )}
                     {product.stock <= 0 && (
