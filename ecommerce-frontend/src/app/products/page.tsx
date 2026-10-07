@@ -107,36 +107,47 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
   );
 }
 
-type CatMeta = { icon: LucideIcon; color: string; bg: string; activeBg: string };
+type CatMeta = {
+  icon: LucideIcon;
+  color: string;
+  iconBg: string;
+  hoverBg: string;
+  activeBg: string;
+  activeText: string;
+  glow: string;
+};
 
 const CATEGORY_MAP: Record<string, CatMeta> = {
-  'electronique':                   { icon: Zap,             color: 'text-yellow-600',  bg: 'bg-yellow-50',   activeBg: 'bg-yellow-500' },
-  'electronique-smartphones':       { icon: Smartphone,      color: 'text-blue-600',    bg: 'bg-blue-50',     activeBg: 'bg-blue-600' },
-  'electronique-ordinateurs':       { icon: Monitor,         color: 'text-violet-600',  bg: 'bg-violet-50',   activeBg: 'bg-violet-600' },
-  'electronique-accessoires-tech':  { icon: Headphones,      color: 'text-cyan-600',    bg: 'bg-cyan-50',     activeBg: 'bg-cyan-600' },
-  'vetements':                      { icon: Shirt,           color: 'text-pink-600',    bg: 'bg-pink-50',     activeBg: 'bg-pink-600' },
-  'vetements-homme':                { icon: User,            color: 'text-slate-600',   bg: 'bg-slate-100',   activeBg: 'bg-slate-700' },
-  'vetements-femme':                { icon: Gem,             color: 'text-rose-600',    bg: 'bg-rose-50',     activeBg: 'bg-rose-500' },
-  'vetements-enfant':               { icon: Baby,            color: 'text-orange-500',  bg: 'bg-orange-50',   activeBg: 'bg-orange-500' },
-  'maison-jardin':                  { icon: Home,            color: 'text-green-600',   bg: 'bg-green-50',    activeBg: 'bg-green-600' },
-  'maison-jardin-mobilier':         { icon: Armchair,        color: 'text-amber-600',   bg: 'bg-amber-50',    activeBg: 'bg-amber-600' },
-  'maison-jardin-decoration':       { icon: Sparkles,        color: 'text-indigo-600',  bg: 'bg-indigo-50',   activeBg: 'bg-indigo-600' },
-  'maison-jardin-jardin':           { icon: Leaf,            color: 'text-emerald-600', bg: 'bg-emerald-50',  activeBg: 'bg-emerald-600' },
-  'sports':                         { icon: Dumbbell,        color: 'text-red-600',     bg: 'bg-red-50',      activeBg: 'bg-red-500' },
-  'sports-fitness':                 { icon: Dumbbell,        color: 'text-red-600',     bg: 'bg-red-50',      activeBg: 'bg-red-500' },
-  'sports-football':                { icon: Trophy,          color: 'text-green-600',   bg: 'bg-green-50',    activeBg: 'bg-green-600' },
-  'sports-running':                 { icon: Watch,           color: 'text-orange-600',  bg: 'bg-orange-50',   activeBg: 'bg-orange-600' },
-  'livres':                         { icon: BookOpen,        color: 'text-teal-600',    bg: 'bg-teal-50',     activeBg: 'bg-teal-600' },
-  'beaute':                         { icon: Sparkles,        color: 'text-fuchsia-600', bg: 'bg-fuchsia-50',  activeBg: 'bg-fuchsia-600' },
-  'jouets':                         { icon: Gamepad2,        color: 'text-yellow-600',  bg: 'bg-yellow-50',   activeBg: 'bg-yellow-500' },
-  'alimentation':                   { icon: UtensilsCrossed, color: 'text-orange-600',  bg: 'bg-orange-50',   activeBg: 'bg-orange-600' },
-  'alimentation-produits-locaux':   { icon: UtensilsCrossed, color: 'text-lime-600',    bg: 'bg-lime-50',     activeBg: 'bg-lime-600' },
-  'alimentation-snacks':            { icon: UtensilsCrossed, color: 'text-amber-600',   bg: 'bg-amber-50',    activeBg: 'bg-amber-600' },
-  'alimentation-boissons':          { icon: UtensilsCrossed, color: 'text-sky-600',     bg: 'bg-sky-50',      activeBg: 'bg-sky-600' },
+  'electronique':                   { icon: Zap,             color: 'text-yellow-600',  iconBg: 'bg-yellow-100',  hoverBg: 'hover:bg-yellow-50',  activeBg: 'bg-yellow-500',  activeText: 'text-white', glow: 'shadow-yellow-200' },
+  'electronique-smartphones':       { icon: Smartphone,      color: 'text-blue-600',    iconBg: 'bg-blue-100',    hoverBg: 'hover:bg-blue-50',    activeBg: 'bg-blue-600',    activeText: 'text-white', glow: 'shadow-blue-200' },
+  'electronique-ordinateurs':       { icon: Monitor,         color: 'text-violet-600',  iconBg: 'bg-violet-100',  hoverBg: 'hover:bg-violet-50',  activeBg: 'bg-violet-600',  activeText: 'text-white', glow: 'shadow-violet-200' },
+  'electronique-accessoires-tech':  { icon: Headphones,      color: 'text-cyan-600',    iconBg: 'bg-cyan-100',    hoverBg: 'hover:bg-cyan-50',    activeBg: 'bg-cyan-600',    activeText: 'text-white', glow: 'shadow-cyan-200' },
+  'vetements':                      { icon: Shirt,           color: 'text-pink-600',    iconBg: 'bg-pink-100',    hoverBg: 'hover:bg-pink-50',    activeBg: 'bg-pink-600',    activeText: 'text-white', glow: 'shadow-pink-200' },
+  'vetements-homme':                { icon: User,            color: 'text-slate-600',   iconBg: 'bg-slate-100',   hoverBg: 'hover:bg-slate-50',   activeBg: 'bg-slate-700',   activeText: 'text-white', glow: 'shadow-slate-200' },
+  'vetements-femme':                { icon: Gem,             color: 'text-rose-600',    iconBg: 'bg-rose-100',    hoverBg: 'hover:bg-rose-50',    activeBg: 'bg-rose-500',    activeText: 'text-white', glow: 'shadow-rose-200' },
+  'vetements-enfant':               { icon: Baby,            color: 'text-orange-500',  iconBg: 'bg-orange-100',  hoverBg: 'hover:bg-orange-50',  activeBg: 'bg-orange-500',  activeText: 'text-white', glow: 'shadow-orange-200' },
+  'maison-jardin':                  { icon: Home,            color: 'text-green-600',   iconBg: 'bg-green-100',   hoverBg: 'hover:bg-green-50',   activeBg: 'bg-green-600',   activeText: 'text-white', glow: 'shadow-green-200' },
+  'maison-jardin-mobilier':         { icon: Armchair,        color: 'text-amber-600',   iconBg: 'bg-amber-100',   hoverBg: 'hover:bg-amber-50',   activeBg: 'bg-amber-600',   activeText: 'text-white', glow: 'shadow-amber-200' },
+  'maison-jardin-decoration':       { icon: Sparkles,        color: 'text-indigo-600',  iconBg: 'bg-indigo-100',  hoverBg: 'hover:bg-indigo-50',  activeBg: 'bg-indigo-600',  activeText: 'text-white', glow: 'shadow-indigo-200' },
+  'maison-jardin-jardin':           { icon: Leaf,            color: 'text-emerald-600', iconBg: 'bg-emerald-100', hoverBg: 'hover:bg-emerald-50', activeBg: 'bg-emerald-600', activeText: 'text-white', glow: 'shadow-emerald-200' },
+  'sports':                         { icon: Dumbbell,        color: 'text-red-600',     iconBg: 'bg-red-100',     hoverBg: 'hover:bg-red-50',     activeBg: 'bg-red-500',     activeText: 'text-white', glow: 'shadow-red-200' },
+  'sports-fitness':                 { icon: Dumbbell,        color: 'text-red-600',     iconBg: 'bg-red-100',     hoverBg: 'hover:bg-red-50',     activeBg: 'bg-red-500',     activeText: 'text-white', glow: 'shadow-red-200' },
+  'sports-football':                { icon: Trophy,          color: 'text-green-600',   iconBg: 'bg-green-100',   hoverBg: 'hover:bg-green-50',   activeBg: 'bg-green-600',   activeText: 'text-white', glow: 'shadow-green-200' },
+  'sports-running':                 { icon: Watch,           color: 'text-orange-600',  iconBg: 'bg-orange-100',  hoverBg: 'hover:bg-orange-50',  activeBg: 'bg-orange-600',  activeText: 'text-white', glow: 'shadow-orange-200' },
+  'livres':                         { icon: BookOpen,        color: 'text-teal-600',    iconBg: 'bg-teal-100',    hoverBg: 'hover:bg-teal-50',    activeBg: 'bg-teal-600',    activeText: 'text-white', glow: 'shadow-teal-200' },
+  'beaute':                         { icon: Sparkles,        color: 'text-fuchsia-600', iconBg: 'bg-fuchsia-100', hoverBg: 'hover:bg-fuchsia-50', activeBg: 'bg-fuchsia-600', activeText: 'text-white', glow: 'shadow-fuchsia-200' },
+  'jouets':                         { icon: Gamepad2,        color: 'text-yellow-600',  iconBg: 'bg-yellow-100',  hoverBg: 'hover:bg-yellow-50',  activeBg: 'bg-yellow-500',  activeText: 'text-white', glow: 'shadow-yellow-200' },
+  'alimentation':                   { icon: UtensilsCrossed, color: 'text-orange-600',  iconBg: 'bg-orange-100',  hoverBg: 'hover:bg-orange-50',  activeBg: 'bg-orange-600',  activeText: 'text-white', glow: 'shadow-orange-200' },
+  'alimentation-produits-locaux':   { icon: UtensilsCrossed, color: 'text-lime-600',    iconBg: 'bg-lime-100',    hoverBg: 'hover:bg-lime-50',    activeBg: 'bg-lime-600',    activeText: 'text-white', glow: 'shadow-lime-200' },
+  'alimentation-snacks':            { icon: UtensilsCrossed, color: 'text-amber-600',   iconBg: 'bg-amber-100',   hoverBg: 'hover:bg-amber-50',   activeBg: 'bg-amber-600',   activeText: 'text-white', glow: 'shadow-amber-200' },
+  'alimentation-boissons':          { icon: UtensilsCrossed, color: 'text-sky-600',     iconBg: 'bg-sky-100',     hoverBg: 'hover:bg-sky-50',     activeBg: 'bg-sky-600',     activeText: 'text-white', glow: 'shadow-sky-200' },
 };
 
 function getCatMeta(slug: string): CatMeta {
-  return CATEGORY_MAP[slug] ?? { icon: ShoppingBag, color: 'text-slate-500', bg: 'bg-slate-100', activeBg: 'bg-slate-600' };
+  return CATEGORY_MAP[slug] ?? {
+    icon: ShoppingBag, color: 'text-slate-500', iconBg: 'bg-slate-100',
+    hoverBg: 'hover:bg-slate-50', activeBg: 'bg-slate-600', activeText: 'text-white', glow: 'shadow-slate-200',
+  };
 }
 
 function ProductsContent() {
@@ -259,35 +270,48 @@ function ProductsContent() {
 
           {/* Categories */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Catégorie</h3>
-            <div className="space-y-0.5">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Catégories</h3>
+            <div className="space-y-1">
+              {/* Tous les produits */}
               <button
                 onClick={() => updateFilters({ category: '' })}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm font-medium ${
-                  !currentCategory ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
+                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border transition-all duration-200 text-sm font-semibold ${
+                  !currentCategory
+                    ? 'bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-300'
+                    : 'bg-white border-slate-100 text-slate-700 hover:border-slate-300 hover:shadow-sm hover:scale-[1.01]'
                 }`}
               >
-                <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${!currentCategory ? 'bg-white/20' : 'bg-slate-100'}`}>
-                  <ShoppingBag className={`h-3.5 w-3.5 ${!currentCategory ? 'text-white' : 'text-slate-500'}`} />
+                <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                  !currentCategory ? 'bg-white/15' : 'bg-slate-100'
+                }`}>
+                  <ShoppingBag className={`h-4 w-4 ${!currentCategory ? 'text-white' : 'text-slate-500'}`} />
                 </span>
-                Tous les produits
+                <span className="truncate">Tous les produits</span>
               </button>
+
               {categories.map((cat) => {
                 const isActive = currentCategory === cat.slug;
-                const meta = getCatMeta(cat.slug);
-                const Icon = meta.icon;
+                const m = getCatMeta(cat.slug);
+                const Icon = m.icon;
                 return (
                   <button
                     key={cat.id}
                     onClick={() => { updateFilters({ category: cat.slug }); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm ${
-                      isActive ? `${meta.activeBg} text-white font-semibold shadow-sm` : 'text-slate-700 hover:bg-slate-100 font-medium'
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border transition-all duration-200 text-sm font-semibold ${
+                      isActive
+                        ? `${m.activeBg} border-transparent ${m.activeText} shadow-md ${m.glow}`
+                        : `bg-white border-slate-100 text-slate-700 ${m.hoverBg} hover:border-slate-200 hover:shadow-sm hover:scale-[1.01]`
                     }`}
                   >
-                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive ? 'bg-white/20' : meta.bg}`}>
-                      <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : meta.color}`} />
+                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:rotate-3 ${
+                      isActive ? 'bg-white/20' : m.iconBg
+                    }`}>
+                      <Icon className={`h-4 w-4 ${isActive ? 'text-white' : m.color}`} />
                     </span>
-                    {cat.name}
+                    <span className="truncate">{cat.name}</span>
+                    {isActive && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
+                    )}
                   </button>
                 );
               })}
