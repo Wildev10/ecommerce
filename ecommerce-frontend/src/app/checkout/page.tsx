@@ -364,7 +364,7 @@ export default function CheckoutPage() {
           {shipping > 0 && (
             <p className="text-xs text-slate-400 mb-4 flex items-center gap-1.5">
               <Truck className="h-3.5 w-3.5" />
-              Livraison gratuite dès {formatPrice(50000)}
+              Livraison gratuite à partir de {formatPrice(50000)}
             </p>
           )}
 

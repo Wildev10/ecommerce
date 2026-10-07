@@ -120,7 +120,7 @@ export default function HomePage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-orange-500/20 border border-orange-500/30 text-orange-300 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
               <Zap className="h-4 w-4" />
-              Livraison gratuite dès 50.000 FCFA
+              Livraison gratuite à partir de 50.000 FCFA
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
