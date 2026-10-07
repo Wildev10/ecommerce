@@ -4,16 +4,41 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Search,
-  X,
-  ShoppingCart,
-  Star,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  SlidersHorizontal,
-  ShoppingBag,
+  Search, X, ShoppingCart, Star, ChevronLeft, ChevronRight,
+  Loader2, SlidersHorizontal, ShoppingBag,
+  Zap, Smartphone, Monitor, Headphones, Shirt, Home, Leaf,
+  Watch, Tv, Camera, Package, Sparkles, User, Users, Armchair,
+  Gem, Dumbbell, BookOpen, UtensilsCrossed, Car, Baby,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+const CATEGORY_MAP: Record<string, { icon: LucideIcon; color: string; bg: string; activeBg: string }> = {
+  electronique:       { icon: Zap,            color: 'text-yellow-600', bg: 'bg-yellow-50',  activeBg: 'bg-yellow-500' },
+  smartphones:        { icon: Smartphone,      color: 'text-blue-600',   bg: 'bg-blue-50',    activeBg: 'bg-blue-600' },
+  ordinateurs:        { icon: Monitor,         color: 'text-violet-600', bg: 'bg-violet-50',  activeBg: 'bg-violet-600' },
+  'accessoires-tech': { icon: Headphones,      color: 'text-cyan-600',   bg: 'bg-cyan-50',    activeBg: 'bg-cyan-600' },
+  vetements:          { icon: Shirt,           color: 'text-pink-600',   bg: 'bg-pink-50',    activeBg: 'bg-pink-600' },
+  homme:              { icon: User,            color: 'text-slate-600',  bg: 'bg-slate-100',  activeBg: 'bg-slate-700' },
+  femme:              { icon: Gem,             color: 'text-rose-600',   bg: 'bg-rose-50',    activeBg: 'bg-rose-500' },
+  enfant:             { icon: Baby,            color: 'text-orange-500', bg: 'bg-orange-50',  activeBg: 'bg-orange-500' },
+  'maison-jardin':    { icon: Home,            color: 'text-green-600',  bg: 'bg-green-50',   activeBg: 'bg-green-600' },
+  mobilier:           { icon: Armchair,        color: 'text-amber-600',  bg: 'bg-amber-50',   activeBg: 'bg-amber-600' },
+  decoration:         { icon: Sparkles,        color: 'text-indigo-600', bg: 'bg-indigo-50',  activeBg: 'bg-indigo-600' },
+  jardin:             { icon: Leaf,            color: 'text-emerald-600',bg: 'bg-emerald-50', activeBg: 'bg-emerald-600' },
+  sport:              { icon: Dumbbell,        color: 'text-red-600',    bg: 'bg-red-50',     activeBg: 'bg-red-500' },
+  montres:            { icon: Watch,           color: 'text-slate-600',  bg: 'bg-slate-100',  activeBg: 'bg-slate-700' },
+  tv:                 { icon: Tv,              color: 'text-blue-700',   bg: 'bg-blue-50',    activeBg: 'bg-blue-700' },
+  photo:              { icon: Camera,          color: 'text-purple-600', bg: 'bg-purple-50',  activeBg: 'bg-purple-600' },
+  livres:             { icon: BookOpen,        color: 'text-teal-600',   bg: 'bg-teal-50',    activeBg: 'bg-teal-600' },
+  alimentation:       { icon: UtensilsCrossed, color: 'text-orange-600', bg: 'bg-orange-50',  activeBg: 'bg-orange-600' },
+  auto:               { icon: Car,             color: 'text-gray-600',   bg: 'bg-gray-100',   activeBg: 'bg-gray-700' },
+  famille:            { icon: Users,           color: 'text-sky-600',    bg: 'bg-sky-50',     activeBg: 'bg-sky-600' },
+};
+
+function getCategoryMeta(slug: string) {
+  const key = slug.toLowerCase().replace(/[àâä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/\s+/g, '-');
+  return CATEGORY_MAP[key] ?? { icon: Package, color: 'text-slate-500', bg: 'bg-slate-100', activeBg: 'bg-slate-700' };
+}
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice, getProductImage } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
@@ -225,23 +250,40 @@ function ProductsContent() {
 
           {/* Categories */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Catégorie</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Catégorie</h3>
             <div className="space-y-1">
               <button
                 onClick={() => updateFilters({ category: '' })}
-                className={`w-full text-left px-3 py-2 text-sm rounded-xl transition font-medium ${!currentCategory ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm font-semibold ${
+                  !currentCategory ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'
+                }`}
               >
+                <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${!currentCategory ? 'bg-white/20' : 'bg-slate-100'}`}>
+                  <ShoppingBag className={`h-3.5 w-3.5 ${!currentCategory ? 'text-white' : 'text-slate-500'}`} />
+                </span>
                 Toutes les catégories
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => { updateFilters({ category: cat.slug }); setSidebarOpen(false); }}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-xl transition ${currentCategory === cat.slug ? 'bg-blue-700 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  {cat.name}
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const isActive = currentCategory === cat.slug;
+                const meta = getCategoryMeta(cat.slug);
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => { updateFilters({ category: cat.slug }); setSidebarOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition text-sm ${
+                      isActive
+                        ? `${meta.activeBg} text-white font-semibold shadow-sm`
+                        : 'text-slate-700 hover:bg-slate-100 font-medium'
+                    }`}
+                  >
+                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive ? 'bg-white/20' : meta.bg}`}>
+                      <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : meta.color}`} />
+                    </span>
+                    {cat.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

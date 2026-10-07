@@ -57,11 +57,43 @@ export function formatPrice(price: number | string): string {
 
 /**
  * Retourne l'URL de l'image produit : l'image uploadée si elle existe,
- * sinon une photo Unsplash basée sur le nom du produit.
+ * sinon une photo loremflickr correspondant réellement au produit.
  */
-export function getProductImage(name: string, imageUrl?: string | null): string | null {
+export function getProductImage(name: string, imageUrl?: string | null): string {
   if (imageUrl) return imageUrl;
-  return `https://source.unsplash.com/featured/400x400/?${encodeURIComponent(name)},product`;
+  const keyword = extractProductKeyword(name);
+  return `https://loremflickr.com/400/400/${keyword}`;
+}
+
+function extractProductKeyword(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes('iphone') || (n.includes('apple') && n.includes('phone'))) return 'iphone,apple';
+  if (n.includes('samsung') && (n.includes('galaxy') || n.includes('phone'))) return 'samsung,galaxy,phone';
+  if (n.includes('samsung')) return 'samsung,electronics';
+  if (n.includes('xiaomi') || n.includes('redmi') || n.includes('poco')) return 'xiaomi,smartphone';
+  if (n.includes('huawei')) return 'huawei,phone';
+  if (n.includes('oppo')) return 'oppo,smartphone';
+  if (n.includes('infinix') || n.includes('tecno') || n.includes('itel')) return 'smartphone,android';
+  if (n.includes('macbook') || n.includes('imac')) return 'macbook,apple,laptop';
+  if (n.includes('ipad')) return 'ipad,apple,tablet';
+  if (n.includes('airpod') || n.includes('airpods')) return 'airpods,apple,earbuds';
+  if (n.includes('dell')) return 'dell,laptop';
+  if (n.includes('lenovo')) return 'lenovo,laptop';
+  if (n.includes('asus')) return 'asus,laptop';
+  if (n.includes('hp ') || n.includes('hewlett')) return 'hp,laptop';
+  if (n.includes('acer')) return 'acer,laptop';
+  if (n.includes('laptop') || n.includes('ordinateur') || n.includes('notebook')) return 'laptop,computer';
+  if (n.includes('tablet') || n.includes('tablette')) return 'tablet,screen';
+  if (n.includes('écouteur') || n.includes('headphone') || n.includes('earphone') || n.includes('casque')) return 'headphones,music';
+  if (n.includes('montre') || n.includes('watch')) return 'smartwatch,watch';
+  if (n.includes('télé') || n.includes('tv ') || n.includes('television')) return 'television,screen';
+  if (n.includes('camera') || n.includes('appareil photo')) return 'camera,photography';
+  if (n.includes('nike')) return 'nike,shoes,sport';
+  if (n.includes('adidas')) return 'adidas,shoes,sport';
+  if (n.includes('puma')) return 'puma,shoes,sport';
+  if (n.includes('smartphone') || n.includes('phone') || n.includes('mobile')) return 'smartphone,phone';
+  // Fallback : les 2 premiers mots
+  return name.split(' ').slice(0, 2).join(',').toLowerCase().replace(/[^a-z,]/g, '');
 }
 
 /**

@@ -23,9 +23,17 @@ const nextConfig: NextConfig = {
         hostname: 'picsum.photos',
       },
       {
-        // Images produits Unsplash
         protocol: 'https',
         hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'loremflickr.com',
+      },
+      {
+        // CDN Flickr (loremflickr redirige ici)
+        protocol: 'https',
+        hostname: '*.staticflickr.com',
       },
     ],
   },
