@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Heart, ShoppingCart, Trash2, Loader2, Star } from 'lucide-react';
 import { wishlistApi } from '@/lib/api';
 import type { WishlistItem } from '@/types';
-import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
+import { formatPrice, extractErrorMessage, getProductImage } from '@/lib/api-helpers';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
 import { useRouter } from 'next/navigation';
@@ -116,13 +115,11 @@ export default function WishlistPage() {
 
                 <Link href={`/products/${product.slug}`}>
                   <div className="aspect-square bg-slate-100 relative overflow-hidden">
-                    {product.image_url ? (
-                      <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <ShoppingCart className="h-12 w-12" />
-                      </div>
-                    )}
+                    <img
+                      src={getProductImage(product.name, product.image_url) ?? ''}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                     {product.stock <= 0 && (
                       <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
                         <span className="bg-white text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full">Rupture</span>

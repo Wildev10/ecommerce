@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { shopApi, conversationApi } from '@/lib/api';
-import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
+import { formatPrice, extractErrorMessage, getProductImage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';
 import type { Shop, Product } from '@/types';
@@ -146,13 +146,11 @@ export default function ShopPage() {
                 className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group"
               >
                 <div className="aspect-square bg-slate-100 relative overflow-hidden">
-                  {product.image_url ? (
-                    <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                      <Store className="h-8 w-8" />
-                    </div>
-                  )}
+                  <img
+                    src={getProductImage(product.name, product.image_url) ?? ''}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                   {product.compare_price && product.compare_price > product.price && (
                     <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                       -{Math.round((1 - product.price / product.compare_price) * 100)}%
