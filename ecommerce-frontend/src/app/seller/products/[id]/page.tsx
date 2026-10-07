@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
 import { formatPrice } from '@/lib/api-helpers';
@@ -93,12 +92,12 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
           <div className="aspect-square bg-gray-100 relative">
             {product.image_url ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              (<img
                 src={product.image_url}
                 alt={product.name}
-                fill
-                className="object-cover"
-              />
+                className="w-full h-full object-cover"
+              />)
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
                 <ShoppingCartIcon className="h-24 w-24" />
