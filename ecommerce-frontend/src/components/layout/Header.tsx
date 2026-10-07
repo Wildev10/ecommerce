@@ -15,8 +15,6 @@ import {
   User,
   ChevronDown,
   Truck,
-  Phone,
-  MapPin,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
@@ -57,35 +55,6 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white" style={{ boxShadow: 'var(--shadow)' }}>
-      {/* Top bar */}
-      <div className="bg-slate-900 text-slate-300 text-xs py-2 hidden md:block">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5">
-              <Truck className="h-3.5 w-3.5 text-orange-400" />
-              Livraison gratuite dès <span className="text-white font-medium">50.000 FCFA</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-orange-400" />
-              Livraison partout au Bénin
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-orange-400" />
-              +229 XX XX XX XX
-            </span>
-            {!isAuthenticated && (
-              <span>
-                <Link href="/login" className="hover:text-white transition">Connexion</Link>
-                {' · '}
-                <Link href="/register" className="hover:text-white transition">Inscription</Link>
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Main bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6 h-16">
