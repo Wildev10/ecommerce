@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   Search,
   X,
@@ -16,7 +15,7 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
-import { formatPrice } from '@/lib/api-helpers';
+import { formatPrice, getProductImage } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
 import type { Product, Category, PaginationMeta } from '@/types';
 import toast from 'react-hot-toast';
@@ -55,19 +54,11 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
     <div className="product-card bg-white rounded-2xl border border-slate-100 overflow-hidden group flex flex-col">
       <Link href={`/products/${product.slug || product.id}`} className="block relative">
         <div className="aspect-square bg-slate-50 relative overflow-hidden">
-          {product.image_url ? (
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ShoppingBag className="h-14 w-14 text-slate-200" />
-            </div>
-          )}
+          <img
+            src={getProductImage(product.name, product.image_url) ?? ''}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {discount && (
               <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{discount}%</span>

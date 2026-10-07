@@ -3,11 +3,10 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Search as SearchIcon, Loader2, ShoppingCart, Star, Tag } from 'lucide-react';
 import { searchApi } from '@/lib/api';
 import type { Product, Category } from '@/types';
-import { formatPrice } from '@/lib/api-helpers';
+import { formatPrice, getProductImage } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
 import toast from 'react-hot-toast';
 
@@ -184,13 +183,11 @@ function SearchContent() {
                   <div key={product.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden group hover:shadow-md transition-shadow">
                     <Link href={`/products/${product.slug}`}>
                       <div className="aspect-square bg-slate-100 relative overflow-hidden">
-                        {product.image_url ? (
-                          <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-300">
-                            <ShoppingCart className="h-10 w-10" />
-                          </div>
-                        )}
+                        <img
+                          src={getProductImage(product.name, product.image_url) ?? ''}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                         {product.compare_price && product.compare_price > product.price && (
                           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                             -{Math.round((1 - product.price / product.compare_price) * 100)}%

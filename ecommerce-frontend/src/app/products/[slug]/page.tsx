@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ShoppingCart, ArrowLeft, Minus, Plus, Star, Heart, Check,
   Truck, Shield, RefreshCw, Package, MessageSquare,
 } from 'lucide-react';
 import { productsApi, reviewsApi, wishlistApi } from '@/lib/api';
-import { formatPrice, formatDate } from '@/lib/api-helpers';
+import { formatPrice, formatDate, getProductImage } from '@/lib/api-helpers';
 import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import Loading from '@/components/ui/loading';
@@ -153,20 +152,11 @@ export default function ProductDetailPage() {
         {/* Image */}
         <div className="space-y-3">
           <div className="aspect-square bg-white rounded-2xl border border-slate-100 overflow-hidden relative shadow-sm">
-            {product.image_url ? (
-              <Image
-                src={product.image_url}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="h-24 w-24 text-slate-200" />
-              </div>
-            )}
+            <img
+              src={getProductImage(product.name, product.image_url) ?? ''}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
             {discount && (
               <div className="absolute top-4 left-4">
                 <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">-{discount}%</span>
