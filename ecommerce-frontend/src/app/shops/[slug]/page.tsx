@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { shopApi, conversationApi } from '@/lib/api';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
@@ -58,13 +57,15 @@ export default function ShopPage() {
       {/* Header */}
       {shop.banner_url ? (
         <div className="relative rounded-2xl overflow-hidden h-48 md:h-64">
-          <Image src={shop.banner_url} alt={shop.name} fill className="object-cover" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={shop.banner_url} alt={shop.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-linear-to-t from-slate-900/70 to-transparent" />
           <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl border-2 border-white overflow-hidden bg-white shrink-0">
                 {shop.logo_url ? (
-                  <Image src={shop.logo_url} alt="Logo" width={64} height={64} className="w-full h-full object-cover" />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={shop.logo_url} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-slate-100">
                     <Store className="h-7 w-7 text-slate-400" />
@@ -93,7 +94,8 @@ export default function ShopPage() {
         <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
             {shop.logo_url ? (
-              <Image src={shop.logo_url} alt="Logo" width={64} height={64} className="w-full h-full object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element
+            <img src={shop.logo_url} alt="Logo" className="w-full h-full object-cover" />
             ) : (
               <Store className="h-8 w-8 text-slate-300" />
             )}

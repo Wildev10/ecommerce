@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowLeft, MapPin, Clock, Loader2 } from 'lucide-react';
 import { sellerApi } from '@/lib/api';
 import type { Order } from '@/types';
@@ -90,7 +89,8 @@ export default function SellerOrderDetailPage() {
             <div className="space-y-3">
               {order.items?.map(item => (
                 <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg bg-gray-50">
-                  {item.product?.image_url && <Image src={item.product.image_url} alt="" width={48} height={48} className="w-12 h-12 rounded-lg object-cover" />}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {item.product?.image_url && <img src={item.product.image_url} alt="" className="w-12 h-12 rounded-lg object-cover" />}
                   <div className="flex-1">
                     <p className="font-medium">{item.product?.name || `Produit #${item.product_id}`}</p>
                     <p className="text-sm text-gray-500">{formatPrice(item.product_price)} × {item.quantity}</p>

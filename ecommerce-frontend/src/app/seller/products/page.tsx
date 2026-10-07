@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { productsApi, categoriesApi } from '@/lib/api';
-import Image from 'next/image';
 import { formatPrice, extractErrorMessage } from '@/lib/api-helpers';
 import {
   Loader2, Plus, Edit, Trash2, AlertTriangle, X, Package,
@@ -183,7 +182,8 @@ export default function SellerProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 bg-slate-100 rounded-xl shrink-0 overflow-hidden">
                           {product.image_url ? (
-                            <Image src={product.image_url} alt="" width={48} height={48} className="h-full w-full object-cover" />
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={product.image_url} alt="" className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
                               <Package className="h-5 w-5 text-slate-300" />

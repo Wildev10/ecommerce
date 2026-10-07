@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { sellerApi } from '@/lib/api';
-import Image from 'next/image';
 import { extractErrorMessage } from '@/lib/api-helpers';
 import Loading from '@/components/ui/loading';
 import toast from 'react-hot-toast';
@@ -94,7 +93,8 @@ export default function SellerShopPage() {
       {/* Banner preview */}
       <div className="relative rounded-2xl overflow-hidden h-36 bg-slate-100 border-2 border-dashed border-slate-200">
         {(bannerPreview || shop?.banner_url) ? (
-          <Image src={bannerPreview || shop!.banner_url!} alt="Bannière" fill className="object-cover" />
+          // eslint-disable-next-line @next/next/no-img-element
+          (<img src={bannerPreview || shop!.banner_url!} alt="Bannière" className="w-full h-full object-cover" />)
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
             <Camera className="h-8 w-8 mb-1" />
@@ -113,7 +113,8 @@ export default function SellerShopPage() {
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border-2 border-slate-200">
             {(logoPreview || shop?.logo_url) ? (
-              <Image src={logoPreview || shop!.logo_url!} alt="Logo" width={80} height={80} className="w-full h-full object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element
+              (<img src={logoPreview || shop!.logo_url!} alt="Logo" className="w-full h-full object-cover" />)
             ) : (
               <Store className="h-8 w-8 text-slate-300" />
             )}
