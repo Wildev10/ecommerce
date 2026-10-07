@@ -17,49 +17,56 @@ class AdminUserSeeder extends Seeder
         $sellerPassword = env('SEED_SELLER_PASSWORD') ?: Str::password(20);
         $buyerPassword  = env('SEED_BUYER_PASSWORD')  ?: Str::password(20);
 
+        $now = now();
+
         User::create([
-            'name'      => env('SEED_ADMIN_NAME', 'Admin'),
-            'email'     => env('SEED_ADMIN_EMAIL', 'admin@ecommerce.com'),
-            'password'  => Hash::make($adminPassword),
-            'role'      => 'admin',
-            'phone'     => '+229 97 00 00 01',
-            'is_active' => true,
+            'name'               => env('SEED_ADMIN_NAME', 'Admin'),
+            'email'              => env('SEED_ADMIN_EMAIL', 'admin@ecommerce.com'),
+            'password'           => Hash::make($adminPassword),
+            'role'               => 'admin',
+            'phone'              => '+229 97 00 00 01',
+            'is_active'          => true,
+            'email_verified_at'  => $now,
         ]);
 
         User::create([
-            'name'      => 'Seller Demo',
-            'email'     => env('SEED_SELLER_EMAIL', 'seller@ecommerce.com'),
-            'password'  => Hash::make($sellerPassword),
-            'role'      => 'seller',
-            'phone'     => '+229 97 00 00 02',
-            'is_active' => true,
+            'name'               => 'Seller Demo',
+            'email'              => env('SEED_SELLER_EMAIL', 'seller@ecommerce.com'),
+            'password'           => Hash::make($sellerPassword),
+            'role'               => 'seller',
+            'phone'              => '+229 97 00 00 02',
+            'is_active'          => true,
+            'email_verified_at'  => $now,
         ]);
 
         User::create([
-            'name'      => 'Seller Demo 2',
-            'email'     => 'seller2@ecommerce.com',
-            'password'  => Hash::make($sellerPassword),
-            'role'      => 'seller',
-            'phone'     => '+229 97 00 00 05',
-            'is_active' => true,
+            'name'               => 'Seller Demo 2',
+            'email'              => 'seller2@ecommerce.com',
+            'password'           => Hash::make($sellerPassword),
+            'role'               => 'seller',
+            'phone'              => '+229 97 00 00 05',
+            'is_active'          => true,
+            'email_verified_at'  => $now,
         ]);
 
         User::create([
-            'name'      => 'Acheteur Demo',
-            'email'     => env('SEED_BUYER_EMAIL', 'buyer@ecommerce.com'),
-            'password'  => Hash::make($buyerPassword),
-            'role'      => 'buyer',
-            'phone'     => '+229 97 00 00 03',
-            'is_active' => true,
+            'name'               => 'Acheteur Demo',
+            'email'              => env('SEED_BUYER_EMAIL', 'buyer@ecommerce.com'),
+            'password'           => Hash::make($buyerPassword),
+            'role'               => 'buyer',
+            'phone'              => '+229 97 00 00 03',
+            'is_active'          => true,
+            'email_verified_at'  => $now,
         ]);
 
         User::create([
-            'name'      => 'Acheteur Demo 2',
-            'email'     => 'buyer2@ecommerce.com',
-            'password'  => Hash::make($buyerPassword),
-            'role'      => 'buyer',
-            'phone'     => '+229 97 00 00 04',
-            'is_active' => true,
+            'name'               => 'Acheteur Demo 2',
+            'email'              => 'buyer2@ecommerce.com',
+            'password'           => Hash::make($buyerPassword),
+            'role'               => 'buyer',
+            'phone'              => '+229 97 00 00 04',
+            'is_active'          => true,
+            'email_verified_at'  => $now,
         ]);
 
         $this->command->info('');
