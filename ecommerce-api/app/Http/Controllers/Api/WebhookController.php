@@ -17,6 +17,34 @@ class WebhookController extends Controller
     use ApiResponse;
 
     /**
+     * GET /api/webhooks/fedapay
+     * FedaPay redirige le navigateur ici après paiement (declined/canceled/close).
+     * On redirige vers le frontend avec l'order_id trouvé via transaction_id.
+     */
+    public function fedapayBrowserRedirect(Request $request)
+    {
+        $transactionId = $request->get('id');
+        $status        = $request->get('status', 'unknown');
+        $frontendBase  = env('FRONTEND_URL', 'http://localhost:3000');
+
+        $orderId = null;
+        if ($transactionId) {
+            $payment = Payment::where('transaction_id', (string) $transactionId)->first();
+            $orderId = $payment?->order_id;
+
+            if ($payment && $payment->status === 'pending') {
+                $payment->update(['status' => 'failed']);
+            }
+        }
+
+        $redirectUrl = $frontendBase . '/payment/callback'
+            . '?order_id=' . ($orderId ?? '')
+            . '&status=' . $status;
+
+        return redirect($redirectUrl);
+    }
+
+    /**
      * POST /api/webhooks/fedapay
      * Reçoit les événements de paiement FedaPay (pas d'auth Sanctum).
      */
