@@ -9,6 +9,7 @@ import {
   Smartphone, Monitor, Headphones, Zap, Shirt, User, Gem, Baby,
   Home, Armchair, Sparkles, Leaf, Dumbbell, Trophy, Watch,
   BookOpen, Gamepad2, UtensilsCrossed, type LucideIcon,
+  ArrowUpDown, TrendingUp, TrendingDown, Clock, Flame,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
@@ -320,45 +321,78 @@ function ProductsContent() {
 
           {/* Price range */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Prix (FCFA)</h3>
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Prix (FCFA)</h3>
             <div className="space-y-2">
-              <input
-                type="number"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                onBlur={() => updateFilters({ min_price: minPrice })}
-                placeholder="Min"
-                className="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition"
-              />
-              <input
-                type="number"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                onBlur={() => updateFilters({ max_price: maxPrice })}
-                placeholder="Max"
-                className="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 bg-slate-50 transition"
-              />
+              <div className="relative group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">Min</span>
+                <input
+                  type="number"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  onBlur={() => updateFilters({ min_price: minPrice })}
+                  placeholder="0"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 hover:border-slate-300 hover:shadow-sm transition-all"
+                />
+              </div>
+              <div className="flex items-center justify-center">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="mx-2 text-xs text-slate-400 font-semibold">à</span>
+                <div className="h-px flex-1 bg-slate-200" />
+              </div>
+              <div className="relative group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">Max</span>
+                <input
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  onBlur={() => updateFilters({ max_price: maxPrice })}
+                  placeholder="∞"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 hover:border-slate-300 hover:shadow-sm transition-all"
+                />
+              </div>
+              {(minPrice || maxPrice) && (
+                <button
+                  onClick={() => { setMinPrice(''); setMaxPrice(''); updateFilters({ min_price: '', max_price: '' }); }}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-red-500 hover:text-red-700 font-semibold transition"
+                >
+                  <X className="h-3 w-3" /> Effacer le prix
+                </button>
+              )}
             </div>
           </div>
 
           {/* Sort */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Trier par</h3>
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Trier par</h3>
             <div className="space-y-1">
               {[
-                { value: 'newest', label: 'Plus récents' },
-                { value: 'price_asc', label: 'Prix croissant' },
-                { value: 'price_desc', label: 'Prix décroissant' },
-                { value: 'popular', label: 'Populaires' },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => updateFilters({ sort: opt.value })}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-xl transition ${currentSort === opt.value ? 'bg-slate-900 text-white font-medium' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+                { value: 'newest',     label: 'Plus récents',     icon: Clock,      iconColor: 'text-blue-500',   iconBg: 'bg-blue-50',   activeBg: 'bg-blue-600',   glow: 'shadow-blue-200' },
+                { value: 'price_asc',  label: 'Prix croissant',   icon: TrendingUp, iconColor: 'text-green-500',  iconBg: 'bg-green-50',  activeBg: 'bg-green-600',  glow: 'shadow-green-200' },
+                { value: 'price_desc', label: 'Prix décroissant', icon: TrendingDown,iconColor: 'text-red-500',   iconBg: 'bg-red-50',    activeBg: 'bg-red-500',    glow: 'shadow-red-200' },
+                { value: 'popular',    label: 'Populaires',       icon: Flame,      iconColor: 'text-orange-500', iconBg: 'bg-orange-50', activeBg: 'bg-orange-500', glow: 'shadow-orange-200' },
+              ].map((opt) => {
+                const isActive = currentSort === opt.value;
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => updateFilters({ sort: opt.value })}
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border text-sm font-semibold transition-all duration-200 ${
+                      isActive
+                        ? `${opt.activeBg} border-transparent text-white shadow-md ${opt.glow}`
+                        : 'bg-white border-slate-100 text-slate-700 hover:border-slate-200 hover:shadow-sm hover:scale-[1.01]'
+                    }`}
+                  >
+                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:rotate-3 ${
+                      isActive ? 'bg-white/20' : opt.iconBg
+                    }`}>
+                      <Icon className={`h-4 w-4 ${isActive ? 'text-white' : opt.iconColor}`} />
+                    </span>
+                    <span>{opt.label}</span>
+                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
