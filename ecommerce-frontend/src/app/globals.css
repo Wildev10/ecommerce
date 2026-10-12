@@ -1,88 +1,279 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════
+   E-SHOP BÉNIN — Design System v2
+   Premium marketplace for West Africa
+═══════════════════════════════════════════════ */
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --surface: #ffffff;
-  --border: #e2e8f0;
-  --muted: #64748b;
+  /* ── Backgrounds ── */
+  --background: #f8f7f4;
+  --surface:    #ffffff;
+  --surface-2:  #f3f1ec;
+  --surface-3:  #ede9e2;
 
-  --primary: #1d4ed8;
-  --primary-dark: #1e3a8a;
-  --primary-light: #dbeafe;
+  /* ── Foreground ── */
+  --foreground:  #1a1714;
+  --foreground-2: #4a4540;
+  --muted:       #9a948a;
 
-  --accent: #ea580c;
-  --accent-hover: #c2410c;
-  --accent-light: #fff7ed;
+  /* ── Borders ── */
+  --border:       #e6e1d9;
+  --border-2:     #d0cac0;
 
-  --success: #16a34a;
-  --danger: #dc2626;
-  --warning: #d97706;
+  /* ── Brand Orange ── */
+  --orange:        #f97316;
+  --orange-dark:   #ea580c;
+  --orange-deeper: #c2410c;
+  --orange-light:  #fff7ed;
+  --orange-mid:    #fed7aa;
 
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* ── Blue ── */
+  --blue:       #2563eb;
+  --blue-dark:  #1d4ed8;
+  --blue-light: #eff6ff;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --shadow: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.06);
+  /* ── Status ── */
+  --success:       #059669;
+  --success-light: #d1fae5;
+  --danger:        #dc2626;
+  --danger-light:  #fee2e2;
+  --warning:       #d97706;
+
+  /* ── Dark Mode Section ── */
+  --dark:          #0e0d0b;
+  --dark-2:        #1c1915;
+  --dark-3:        #252119;
+  --dark-border:   #302d27;
+  --dark-text:     #e8e0d5;
+  --dark-muted:    #7a736a;
+
+  /* ── Radius ── */
+  --r-xs:   5px;
+  --r-sm:   9px;
+  --r:      13px;
+  --r-md:   17px;
+  --r-lg:   22px;
+  --r-xl:   28px;
+  --r-full: 9999px;
+
+  /* ── Shadows ── */
+  --s-xs: 0 1px 2px 0 rgb(0 0 0 / .06);
+  --s-sm: 0 1px 3px 0 rgb(0 0 0 / .07), 0 1px 2px -1px rgb(0 0 0 / .07);
+  --s:    0 4px 8px -1px rgb(0 0 0 / .07), 0 2px 4px -2px rgb(0 0 0 / .06);
+  --s-md: 0 10px 20px -3px rgb(0 0 0 / .08), 0 4px 8px -4px rgb(0 0 0 / .05);
+  --s-lg: 0 20px 40px -5px rgb(0 0 0 / .10), 0 8px 16px -6px rgb(0 0 0 / .06);
+  --s-xl: 0 32px 64px -8px rgb(0 0 0 / .14), 0 12px 24px -8px rgb(0 0 0 / .08);
+
+  --s-orange: 0 8px 24px -4px rgb(249 115 22 / .30);
+  --s-blue:   0 8px 24px -4px rgb(37 99 235 / .25);
+  --s-dark:   0 8px 24px -4px rgb(0 0 0 / .35);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), 'Inter', system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
-* {
+/* ─── Reset & Base ─── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.65;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Line clamp utilities */
+/* ─── Typography ─── */
+.text-balance { text-wrap: balance; }
+
+/* ─── Line-clamp ─── */
 .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
-/* Product card hover effect */
+/* ─── Gradient Text ─── */
+.gradient-orange {
+  background: linear-gradient(135deg, #fb923c 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Product Card ─── */
 .product-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1),
+              box-shadow 0.3s ease;
+  will-change: transform, box-shadow;
 }
 .product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-5px);
+  box-shadow: var(--s-lg);
 }
 
-/* Btn primary */
-.btn-primary {
-  background: var(--accent);
-  color: white;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  transition: background 0.15s ease, transform 0.1s ease;
+/* ─── Image Zoom ─── */
+.img-zoom img,
+.img-zoom .product-img {
+  transition: transform 0.5s cubic-bezier(.25,.8,.25,1);
 }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-primary:active { transform: scale(0.98); }
+.img-zoom:hover img,
+.img-zoom:hover .product-img {
+  transform: scale(1.07);
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  background: var(--orange);
+  color: white;
+  font-weight: 700;
+  border-radius: var(--r-sm);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  box-shadow: var(--s-orange);
+}
+.btn-primary:hover  { background: var(--orange-dark); }
+.btn-primary:active { transform: scale(0.97); }
 
 .btn-blue {
-  background: var(--primary);
+  background: var(--blue);
   color: white;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  transition: background 0.15s ease;
+  font-weight: 700;
+  border-radius: var(--r-sm);
+  transition: background 0.15s ease, transform 0.1s ease;
+  box-shadow: var(--s-blue);
 }
-.btn-blue:hover { background: var(--primary-dark); }
+.btn-blue:hover  { background: var(--blue-dark); }
+.btn-blue:active { transform: scale(0.97); }
+
+.btn-dark {
+  background: var(--foreground);
+  color: white;
+  font-weight: 700;
+  border-radius: var(--r-sm);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.btn-dark:hover  { background: var(--foreground-2); }
+.btn-dark:active { transform: scale(0.97); }
+
+/* ─── Inputs ─── */
+.field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field:hover { border-color: var(--border-2); }
+.field:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgb(249 115 22 / .12);
+}
+.field::placeholder { color: var(--muted); }
+
+/* ─── Card ─── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--s-sm);
+}
+
+/* ─── Badge ─── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--r-full);
+  letter-spacing: 0.01em;
+}
+
+/* ─── Section headings ─── */
+.section-title {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+
+/* ─── Animations ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(249 115 22 / .4); }
+  50%       { box-shadow: 0 0 0 8px rgb(249 115 22 / 0); }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.animate-fade-up   { animation: fadeUp 0.5s ease both; }
+.animate-float     { animation: float 4s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 8s linear infinite; }
+
+/* ─── Hover lift ─── */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(.34,1.4,.64,1), box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--s-md);
+}
+
+/* ─── Focus ring ─── */
+.focus-ring:focus {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+/* ─── Overlay gradient ─── */
+.overlay-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgb(0 0 0 / .6) 0%, transparent 100%);
+  pointer-events: none;
+}

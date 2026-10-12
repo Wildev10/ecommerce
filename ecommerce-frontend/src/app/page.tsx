@@ -2,19 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
-  ShoppingBag,
-  Truck,
-  Shield,
-  ArrowRight,
-  Star,
-  ShoppingCart,
-  Zap,
-  RefreshCw,
-  Headphones,
-  BadgePercent,
-  ChevronRight,
+  ShoppingBag, Truck, Shield, ArrowRight, Star,
+  ShoppingCart, RefreshCw, Headphones, ChevronRight,
+  Zap, BadgePercent, Sparkles, TrendingUp,
 } from 'lucide-react';
 import { productsApi, categoriesApi } from '@/lib/api';
 import { formatPrice } from '@/lib/api-helpers';
@@ -23,25 +14,36 @@ import type { Product, Category } from '@/types';
 import toast from 'react-hot-toast';
 
 const CATEGORY_ICONS: Record<string, string> = {
-  'electronique-smartphones': '📱',
-  'electronique-ordinateurs': '💻',
+  'electronique-smartphones':      '📱',
+  'electronique-ordinateurs':      '💻',
   'electronique-accessoires-tech': '🎧',
-  'vetements-homme': '👔',
-  'vetements-femme': '👗',
-  'maison-jardin-mobilier': '🛋️',
-  'maison-jardin-decoration': '🏮',
-  'sports-fitness': '🏋️',
-  'sports-football': '⚽',
-  'sports-running': '👟',
-  'livres-romans': '📚',
-  'beaute-maquillage': '💄',
-  'beaute-soins-peau': '🧴',
-  'beaute-parfums': '🌸',
-  'jouets-jeux-educatifs': '🧩',
-  'jouets-jeux-de-societe': '🎲',
-  'alimentation-epicerie': '🛒',
-  'alimentation-boissons': '🥤',
-  'alimentation-produits-locaux': '🌿',
+  'vetements-homme':               '👔',
+  'vetements-femme':               '👗',
+  'maison-jardin-mobilier':        '🛋️',
+  'maison-jardin-decoration':      '🏮',
+  'sports-fitness':                '🏋️',
+  'sports-football':               '⚽',
+  'sports-running':                '👟',
+  'livres-romans':                 '📚',
+  'beaute-maquillage':             '💄',
+  'beaute-soins-peau':             '🧴',
+  'beaute-parfums':                '🌸',
+  'jouets-jeux-educatifs':         '🧩',
+  'alimentation-epicerie':         '🛒',
+  'alimentation-produits-locaux':  '🌿',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  'electronique-smartphones':      'bg-blue-50 group-hover:bg-blue-100',
+  'electronique-ordinateurs':      'bg-violet-50 group-hover:bg-violet-100',
+  'electronique-accessoires-tech': 'bg-cyan-50 group-hover:bg-cyan-100',
+  'vetements-homme':               'bg-slate-50 group-hover:bg-slate-100',
+  'vetements-femme':               'bg-pink-50 group-hover:bg-pink-100',
+  'maison-jardin-mobilier':        'bg-amber-50 group-hover:bg-amber-100',
+  'maison-jardin-decoration':      'bg-indigo-50 group-hover:bg-indigo-100',
+  'sports-fitness':                'bg-red-50 group-hover:bg-red-100',
+  'beaute-maquillage':             'bg-fuchsia-50 group-hover:bg-fuchsia-100',
+  'alimentation-produits-locaux':  'bg-green-50 group-hover:bg-green-100',
 };
 
 const TRUST_BADGES = [
@@ -49,25 +51,29 @@ const TRUST_BADGES = [
     icon: Truck,
     title: 'Livraison rapide',
     desc: 'Partout au Bénin en 24–48h',
-    color: 'bg-blue-50 text-blue-700',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
   },
   {
     icon: Shield,
     title: 'Paiement sécurisé',
     desc: 'MTN MoMo & Moov Money',
-    color: 'bg-green-50 text-green-700',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
   },
   {
     icon: RefreshCw,
     title: 'Retour facile',
-    desc: 'Sous 7 jours sans question',
-    color: 'bg-purple-50 text-purple-700',
+    desc: 'Sous 7 jours, sans question',
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
   },
   {
     icon: Headphones,
     title: 'Support client',
     desc: 'Disponible 7j/7',
-    color: 'bg-orange-50 text-orange-700',
+    color: 'text-orange-600',
+    bg: 'bg-orange-50',
   },
 ];
 
@@ -77,7 +83,11 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`h-3.5 w-3.5 ${i <= Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200 fill-slate-200'}`}
+          className={`h-3 w-3 ${
+            i <= Math.round(rating)
+              ? 'fill-amber-400 text-amber-400'
+              : 'text-[var(--border)] fill-[var(--border)]'
+          }`}
         />
       ))}
     </div>
@@ -109,81 +119,146 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
 
-      {/* ───── HERO ───── */}
-      <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-blue-950 to-slate-900">
-        {/* Decorative blobs */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
+      {/* ══════════════════════════════════
+          HERO
+      ══════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[var(--dark)]">
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-          <div className="max-w-2xl">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-orange-500/20 border border-orange-500/30 text-orange-300 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-              <Zap className="h-4 w-4" />
-              Livraison gratuite à partir de 50.000 FCFA
+        {/* Background accents */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-orange-500/6 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[400px] bg-blue-600/5 rounded-full blur-[100px]" />
+          <div
+            className="absolute inset-0 opacity-[0.025]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            }}
+          />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+
+            {/* Left — Text */}
+            <div>
+              {/* Pill badge */}
+              <div className="inline-flex items-center gap-2 bg-orange-500/15 border border-orange-500/25 text-orange-300 text-xs font-semibold px-4 py-2 rounded-full mb-7">
+                <Zap className="h-3.5 w-3.5" />
+                Livraison gratuite dès 50 000 FCFA
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-black text-white leading-[1.08] tracking-tight mb-5">
+                Tout ce dont vous
+                <br />
+                avez besoin,{' '}
+                <span className="gradient-orange">livré chez vous</span>
+              </h1>
+
+              <p className="text-base sm:text-lg text-[var(--dark-muted)] leading-relaxed mb-8 max-w-lg">
+                Des milliers de produits de qualité — électronique, mode, beauté, sport. Payez avec MTN MoMo ou Moov Money, livré partout au Bénin.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 mb-10">
+                <Link
+                  href="/products"
+                  className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-7 py-3.5 rounded-xl font-bold text-sm transition shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40"
+                >
+                  <ShoppingBag className="h-4.5 w-4.5 h-[18px] w-[18px]" />
+                  Explorer les produits
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center justify-center gap-2 bg-white/8 hover:bg-white/14 border border-white/15 text-white px-7 py-3.5 rounded-xl font-bold text-sm transition backdrop-blur-sm"
+                >
+                  Créer un compte gratuit
+                </Link>
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center gap-8 pt-8 border-t border-white/8">
+                {[
+                  { value: '500+', label: 'Produits' },
+                  { value: '50+',  label: 'Vendeurs' },
+                  { value: '24h',  label: 'Livraison' },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="text-2xl font-black text-white">{s.value}</p>
+                    <p className="text-xs text-[var(--dark-muted)] mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
-              Tout ce dont
-              <br />
-              vous avez besoin,{' '}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-400 to-amber-300">
-                livré chez vous
-              </span>
-            </h1>
+            {/* Right — Visual grid */}
+            <div className="hidden lg:block">
+              <div className="relative">
+                {/* Decorative floating cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Électronique', emoji: '📱', color: 'from-blue-500/15 to-violet-500/10', border: 'border-blue-500/20' },
+                    { label: 'Mode & Style', emoji: '👗', color: 'from-pink-500/15 to-rose-500/10', border: 'border-pink-500/20' },
+                    { label: 'Alimentation', emoji: '🌿', color: 'from-green-500/15 to-emerald-500/10', border: 'border-green-500/20' },
+                    { label: 'Sports',       emoji: '🏋️', color: 'from-orange-500/15 to-amber-500/10', border: 'border-orange-500/20' },
+                  ].map((card, i) => (
+                    <div
+                      key={card.label}
+                      className={`bg-gradient-to-br ${card.color} border ${card.border} rounded-2xl p-6 flex flex-col items-center justify-center gap-3 text-center hover:scale-105 transition-transform`}
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    >
+                      <span className="text-4xl">{card.emoji}</span>
+                      <span className="text-white/80 text-sm font-semibold">{card.label}</span>
+                    </div>
+                  ))}
+                </div>
 
-            <p className="text-lg text-slate-300 mb-8 leading-relaxed max-w-xl">
-              Découvrez des milliers de produits de qualité — électronique, mode, beauté, sport. Payez avec MTN MoMo ou Moov Money, livré partout au Bénin.
-            </p>
+                {/* Floating badge */}
+                <div className="absolute -top-4 -right-4 bg-orange-500 text-white rounded-2xl px-4 py-3 shadow-xl shadow-orange-500/30 animate-float">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <div>
+                      <p className="text-xs font-black">Promotions</p>
+                      <p className="text-[10px] opacity-80">Jusqu&apos;à -30%</p>
+                    </div>
+                  </div>
+                </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/products"
-                className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-bold text-base transition"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                Découvrir les produits
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-4 rounded-xl font-bold text-base transition backdrop-blur-sm"
-              >
-                Créer un compte gratuit
-              </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="flex gap-8 mt-10 pt-8 border-t border-white/10">
-              <div>
-                <p className="text-2xl font-bold text-white">500+</p>
-                <p className="text-sm text-slate-400">Produits</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">50+</p>
-                <p className="text-sm text-slate-400">Vendeurs</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">24–48h</p>
-                <p className="text-sm text-slate-400">Livraison</p>
+                <div className="absolute -bottom-4 -left-4 bg-white/10 backdrop-blur-sm border border-white/15 text-white rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-1.5">
+                      {['🇧🇯','🛍️','✨'].map((e, i) => (
+                        <span key={i} className="text-lg">{e}</span>
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-xs font-black">Made in Bénin</p>
+                      <p className="text-[10px] opacity-70">Marketplace locale</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ───── TRUST BADGES ───── */}
-      <section className="bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* ══════════════════════════════════
+          TRUST BADGES
+      ══════════════════════════════════ */}
+      <section className="bg-white border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-7">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {TRUST_BADGES.map((b) => (
-              <div key={b.title} className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-slate-200 transition">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${b.color}`}>
-                  <b.icon className="h-5 w-5" />
+              <div
+                key={b.title}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-[var(--border)] hover:border-[var(--border-2)] hover:shadow-sm transition-all"
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${b.bg}`}>
+                  <b.icon className={`h-4.5 w-4.5 h-[18px] w-[18px] ${b.color}`} />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900 text-sm">{b.title}</p>
-                  <p className="text-xs text-slate-500">{b.desc}</p>
+                  <p className="text-sm font-bold text-[var(--foreground)]">{b.title}</p>
+                  <p className="text-xs text-[var(--muted)]">{b.desc}</p>
                 </div>
               </div>
             ))}
@@ -191,17 +266,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ───── CATEGORIES ───── */}
+      {/* ══════════════════════════════════
+          CATEGORIES
+      ══════════════════════════════════ */}
       {categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-center justify-between mb-7">
+        <section className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Parcourir par catégorie</h2>
-              <p className="text-sm text-slate-500 mt-1">Trouvez exactement ce que vous cherchez</p>
+              <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">
+                Explorez
+              </p>
+              <h2 className="section-title">Parcourir par catégorie</h2>
+              <p className="text-[var(--muted)] text-sm mt-1.5">
+                Trouvez exactement ce que vous cherchez
+              </p>
             </div>
             <Link
               href="/products"
-              className="flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 transition"
+              className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[var(--foreground)] hover:text-orange-600 border border-[var(--border)] hover:border-orange-300 px-4 py-2 rounded-xl transition"
             >
               Tout voir <ChevronRight className="h-4 w-4" />
             </Link>
@@ -212,14 +294,16 @@ export default function HomePage() {
               <Link
                 key={cat.id}
                 href={`/products?category=${cat.slug}`}
-                className="group flex flex-col items-center p-4 bg-white rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition text-center"
+                className={`group flex flex-col items-center p-4 rounded-2xl border border-[var(--border)] hover:border-[var(--border-2)] hover:shadow-md transition-all text-center ${CATEGORY_COLORS[cat.slug] ?? 'bg-white hover:bg-[var(--surface-2)]'}`}
               >
-                <div className="w-12 h-12 flex items-center justify-center text-2xl mb-2 group-hover:scale-110 transition-transform">
+                <div className="text-3xl mb-2.5 group-hover:scale-110 transition-transform">
                   {CATEGORY_ICONS[cat.slug] ?? '🛍️'}
                 </div>
-                <p className="text-xs font-medium text-slate-700 leading-tight line-clamp-2">{cat.name}</p>
+                <p className="text-xs font-semibold text-[var(--foreground-2)] leading-tight line-clamp-2">
+                  {cat.name}
+                </p>
                 {cat.products_count !== undefined && (
-                  <p className="text-[10px] text-slate-400 mt-0.5">{cat.products_count}</p>
+                  <p className="text-[10px] text-[var(--muted)] mt-0.5">{cat.products_count}</p>
                 )}
               </Link>
             ))}
@@ -227,38 +311,57 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ───── PROMO BANNER ───── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="bg-linear-to-r from-orange-500 to-amber-500 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <BadgePercent className="h-5 w-5 text-white" />
-              <span className="text-white/80 font-medium text-sm">Offre limitée</span>
+      {/* ══════════════════════════════════
+          PROMO BANNER
+      ══════════════════════════════════ */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-8 pb-14">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 p-8 sm:p-10">
+          {/* Decorative */}
+          <div className="absolute -right-16 -top-16 w-80 h-80 bg-white/8 rounded-full" />
+          <div className="absolute -right-6 bottom-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2" />
+
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <BadgePercent className="h-5 w-5 text-white" />
+                <span className="text-white/75 font-semibold text-sm">Offre limitée</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight mb-2">
+                Jusqu&apos;à <span className="text-yellow-200">−30%</span> sur la tech !
+              </h3>
+              <p className="text-white/70 text-sm">
+                Smartphones, laptops et accessoires en promotion
+              </p>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white mb-1">Jusqu&apos;à -30% sur la tech !</h3>
-            <p className="text-white/80 text-sm">Smartphones, laptops et accessoires en promotion</p>
+            <Link
+              href="/products?category=electronique-smartphones"
+              className="shrink-0 inline-flex items-center gap-2 bg-white text-orange-600 hover:bg-orange-50 px-7 py-3.5 rounded-xl font-bold text-sm transition shadow-lg shadow-black/15"
+            >
+              Voir les offres
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link
-            href="/products?category=electronique-smartphones"
-            className="shrink-0 inline-flex items-center gap-2 bg-white text-orange-600 hover:bg-orange-50 px-7 py-3.5 rounded-xl font-bold transition"
-          >
-            Voir les offres <ArrowRight className="h-5 w-5" />
-          </Link>
         </div>
       </section>
 
-      {/* ───── PRODUITS VEDETTE ───── */}
+      {/* ══════════════════════════════════
+          FEATURED PRODUCTS
+      ══════════════════════════════════ */}
       {featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="flex items-center justify-between mb-7">
+        <section className="max-w-7xl mx-auto px-6 lg:px-8 pb-16">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Produits populaires</h2>
-              <p className="text-sm text-slate-500 mt-1">Les favoris de nos clients</p>
+              <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">
+                Tendances
+              </p>
+              <h2 className="section-title">Produits populaires</h2>
+              <p className="text-[var(--muted)] text-sm mt-1.5">
+                Les favoris de nos clients
+              </p>
             </div>
             <Link
               href="/products"
-              className="flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 transition"
+              className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[var(--foreground)] hover:text-orange-600 border border-[var(--border)] hover:border-orange-300 px-4 py-2 rounded-xl transition"
             >
               Tout voir <ChevronRight className="h-4 w-4" />
             </Link>
@@ -266,112 +369,157 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
             {featured.map((product) => (
-              <div
+              <ProductCard
                 key={product.id}
-                className="product-card bg-white rounded-2xl border border-slate-100 overflow-hidden group"
-              >
-                <Link href={`/products/${product.slug}`} className="block relative">
-                  <div className="aspect-square bg-slate-50 overflow-hidden">
-                    {product.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="h-14 w-14 text-slate-200" />
-                      </div>
-                    )}
-
-                    {/* Badges */}
-                    <div className="absolute top-2 left-2 flex flex-col gap-1">
-                      {product.compare_price && product.compare_price > product.price && (
-                        <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          -{Math.round(((product.compare_price - product.price) / product.compare_price) * 100)}%
-                        </span>
-                      )}
-                      {product.stock === 0 && (
-                        <span className="bg-slate-800/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                          Rupture
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="p-3.5">
-                  <Link href={`/products/${product.slug}`}>
-                    <h3 className="font-semibold text-slate-800 text-sm line-clamp-2 mb-1.5 hover:text-blue-700 transition leading-snug">
-                      {product.name}
-                    </h3>
-                  </Link>
-
-                  {product.reviews_avg_rating && Number(product.reviews_avg_rating) > 0 && (
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <StarRating rating={Number(product.reviews_avg_rating)} />
-                      <span className="text-xs text-slate-500">({Number(product.reviews_avg_rating).toFixed(1)})</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-2 mt-auto">
-                    <div>
-                      <p className="font-bold text-blue-700 text-base">{formatPrice(product.price)}</p>
-                      {product.compare_price && product.compare_price > product.price && (
-                        <p className="text-xs text-slate-400 line-through leading-none">{formatPrice(product.compare_price)}</p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      disabled={product.stock < 1}
-                      className="p-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                      title="Ajouter au panier"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                product={product}
+                onAddToCart={handleAddToCart}
+              />
             ))}
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-10">
             <Link
               href="/products"
-              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-xl font-semibold transition"
+              className="inline-flex items-center gap-2 bg-[var(--foreground)] hover:bg-[var(--foreground-2)] text-white px-8 py-3.5 rounded-xl font-bold text-sm transition shadow-lg shadow-black/10"
             >
+              <Sparkles className="h-4 w-4" />
               Voir tous les produits
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </section>
       )}
 
-      {/* ───── NEWSLETTER ───── */}
-      <section className="bg-slate-900 py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            Restez informé des meilleures offres
-          </h2>
-          <p className="text-slate-400 mb-7 max-w-md mx-auto">
-            Inscrivez-vous à notre newsletter et soyez les premiers à connaître nos promotions exclusives.
-          </p>
-          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" onSubmit={(e) => { e.preventDefault(); toast.success('Merci pour votre inscription !'); }}>
-            <input
-              type="email"
-              placeholder="Votre adresse email"
-              className="flex-1 px-5 py-3 rounded-xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-400 transition"
-            />
-            <button
-              type="submit"
-              className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-sm transition shrink-0"
+      {/* ══════════════════════════════════
+          NEWSLETTER
+      ══════════════════════════════════ */}
+      <section className="bg-[var(--dark)] py-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 bg-orange-500/15 border border-orange-500/25 text-orange-400 text-xs font-semibold px-4 py-2 rounded-full mb-5">
+              <Zap className="h-3.5 w-3.5" />
+              Newsletter
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
+              Restez informé des meilleures offres
+            </h2>
+            <p className="text-[var(--dark-muted)] text-sm mb-8 leading-relaxed">
+              Inscrivez-vous et soyez les premiers à connaître nos promotions exclusives et nouveaux produits.
+            </p>
+            <form
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                toast.success('Merci pour votre inscription !');
+              }}
             >
-              S&apos;inscrire
-            </button>
-          </form>
+              <input
+                type="email"
+                placeholder="Votre adresse email"
+                className="flex-1 px-5 py-3 rounded-xl text-sm bg-white/8 border border-white/12 text-white placeholder:text-[var(--dark-muted)] focus:outline-none focus:border-orange-400 focus:bg-white/12 transition"
+              />
+              <button
+                type="submit"
+                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-orange-500/25 shrink-0"
+              >
+                S&apos;inscrire
+              </button>
+            </form>
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+/* ── Product Card ── */
+function ProductCard({
+  product,
+  onAddToCart,
+}: {
+  product: Product;
+  onAddToCart: (p: Product) => void;
+}) {
+  const discount =
+    product.compare_price && product.compare_price > product.price
+      ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+      : null;
+
+  return (
+    <div className="product-card group bg-white rounded-2xl border border-[var(--border)] overflow-hidden flex flex-col">
+      {/* Image */}
+      <Link href={`/products/${product.slug}`} className="block relative img-zoom overflow-hidden">
+        <div className="aspect-square bg-[var(--surface-2)]">
+          {product.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="product-img w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingBag className="h-12 w-12 text-[var(--border-2)]" />
+            </div>
+          )}
+        </div>
+
+        {/* Badges */}
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
+          {discount && (
+            <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+              -{discount}%
+            </span>
+          )}
+          {product.stock === 0 && (
+            <span className="bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              Rupture
+            </span>
+          )}
+        </div>
+
+        {/* Quick add overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+      </Link>
+
+      {/* Info */}
+      <div className="p-4 flex flex-col flex-1">
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="text-sm font-semibold text-[var(--foreground)] line-clamp-2 mb-1.5 hover:text-orange-600 transition leading-snug">
+            {product.name}
+          </h3>
+        </Link>
+
+        {product.reviews_avg_rating !== undefined && Number(product.reviews_avg_rating) > 0 && (
+          <div className="flex items-center gap-1.5 mb-2.5">
+            <StarRating rating={Number(product.reviews_avg_rating)} />
+            <span className="text-xs text-[var(--muted)]">
+              ({Number(product.reviews_avg_rating).toFixed(1)})
+            </span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mt-auto pt-1">
+          <div>
+            <p className="font-black text-[var(--foreground)] text-base leading-none">
+              {formatPrice(product.price)}
+            </p>
+            {product.compare_price && product.compare_price > product.price && (
+              <p className="text-xs text-[var(--muted)] line-through mt-0.5">
+                {formatPrice(product.compare_price)}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => onAddToCart(product)}
+            disabled={product.stock < 1}
+            className="flex items-center justify-center w-9 h-9 bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition disabled:opacity-30 disabled:cursor-not-allowed shadow-sm shadow-orange-200 shrink-0"
+            title="Ajouter au panier"
+          >
+            <ShoppingCart className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
